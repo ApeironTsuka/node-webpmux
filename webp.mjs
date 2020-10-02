@@ -58,7 +58,37 @@ class Image {
   get hasAnim() { return this.loaded ? this.data.extended ? this.data.extended.hasAnim : false : false; }
   get anim() { return this.hasAnim ? this.data.anim : undefined; }
   get frameCount() { return this.anim ? this.anim.frameCount : 0; }
+  get iccp() { return this.data.extended ? this.data.extended.hasICCP ? this.data.iccp.raw : undefined : undefined; }
+  set iccp(raw) {
+    if (!this.data.extended) { this.#convertToExtended(); }
+    if (raw === undefined) { this.data.extended.hasICCP = false; delete this.data.iccp; }
+    else { this.data.iccp = { raw }; this.data.extended.hasICCP = true; }
+  }
+  get exif() { return this.data.extended ? this.data.extended.hasEXIF ? this.data.exif.raw : undefined : undefined; }
+  set exif(raw) {
+    if (!this.data.extended) { this.#convertToExtended(); }
+    if (raw === undefined) { this.data.extended.hasEXIF = false; delete this.data.exif; }
+    else { this.data.exif = { raw }; this.data.extended.hasEXIF = true; }
+  }
+  get xmp() { return this.data.extended ? this.data.extended.hasXMP ? this.data.xmp.raw : undefined : undefined; }
+  set xmp(raw) {
+    if (!this.data.extended) { this.#convertToExtended(); }
+    if (raw === undefined) { this.data.extended.hasXMP = false; delete this.data.xmp; }
+    else { this.data.xmp = { raw }; this.data.extended.hasXMP = true; }
+  }
   async load(path) { this.path = path; this.data = await this.#read(path); this.loaded = true; }
+  #convertToExtended() {
+    if (!this.loaded) { throw new Error('No image loaded'); }
+    this.data.type = constants.TYPE_EXTENDED;
+    this.data.extended = {
+      hasICC: false,
+      hasAlpha: false,
+      hasEXIF: false,
+      hasXMP: false,
+      width: this.vp8 ? this.vp8.width : this.vp8l ? this.vp8l.width : 1,
+      height: this.vp8 ? this.vp8.height : this.vp8l ? this.vp8l.height : 1
+    };
+  }
   async #demuxFrame(path, frame) {
     let header = Buffer.alloc(12), size, chunk, out = [];
     header.write('RIFF', 0);
@@ -96,18 +126,6 @@ class Image {
     for (let i = 0, l = out.length; i < l; i++) { await fs.write(fp, out[i], 0, undefined, undefined); }
     await fs.close(fp);
   }
-  /*
-    dump the individual, unprocessed webp frames to a directory
-    path
-      directory to dump the frames to
-    prefix
-      what to prefix the frame names with
-      default is the file name of the original anim (without .webp)
-      format is <prefix>_<frame number>.webp
-    frame
-      what frame to dump
-      defaults to -1, meaning all frames
-  */
   async demuxAnim(path, frame = -1, prefix = '#FNAME#') {
     let start = 0, end = this.frameCount;
     if (end == 0) { throw new Error('This WebP isn\'t an animation'); }
@@ -361,42 +379,6 @@ class Image {
         (out.extended.hasAnim)) { out.anim.frameCount = out.anim.frames.length; }
     return out;
   }
-
-  /*
-    width/height
-      width/height of the anim
-      range 1-16777216
-      width*height must NOT exceed (2**32)-1
-      passing 0 to either flags it for auto-setting
-    bgColor
-      image bg color
-      format [r,g,b,a]
-      default [255,255,255,255]
-    loops
-      number of times the anim loops
-      range 0-65535 (0 means infinite)
-      default 0
-    x/y/delay/blend/dispose
-      change the default frame x/y/delay/blend/dispose when a frame omits it (see below)
-    frames
-      array of objects in the format { path, delay, x, y, blend, dispose }
-        delay
-          length of this frame in ms
-          range 0-16777215
-          default 100
-          according to the docs, delays <= 10ms are webp implementation defined as many tools/browsers assign their own minimum allowed delay
-        x/y
-          x,y offset to place the frame within the animation
-          range 0-16777215
-          default 0,0
-        blend
-          flag to set whether or not to use alpha blending when drawing the frame
-          defaults to true
-        dispose
-          flag to control frame disposal
-          set to true to clear the image (bounded by this frame) with the bgColor
-          defaults to false
-  */
   static async muxAnim({path, frames, width = 0, height = 0, bgColor = [255,255,255,255], loops = 0, delay = 100, x = 0, y = 0, blend = true, dispose = false}={}) {
     let header = Buffer.alloc(12), chunk = Buffer.alloc(18), out = [], img, alpha = false, size, _w = 0, _h = 0;
     let _width = width-1, _height = height-1;
