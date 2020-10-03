@@ -1,6 +1,6 @@
 {
   "name": "node-webpmux",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A pure Javascript re-implementation of webpmux",
   "main": "webp.mjs",
   "scripts": {
