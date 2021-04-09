@@ -398,16 +398,16 @@ class Image {
           let chunk = Buffer.alloc(18);
           chunk.write('VP8X', 0);
           chunk.writeUInt32LE(10, 4);
-          chunk.writeUInt32LE(_width, 12, 3);
-          chunk.writeUInt32LE(_height, 12, 3);
+          chunk.writeUIntLE(_width, 12, 3);
+          chunk.writeUIntLE(_height, 15, 3);
           out.push(chunk);
+          if (image.data.vp8) { out.push(...createBasicChunk('VP8 ', image.data.vp8.raw)); }
+          else if (image.data.vp8l) { out.push(...createBasicChunk('VP8L', image.data.vp8l.raw)); }
           if (image.data.extended.hasICC) { chunk[8] |= 0b00100000; out.push(...createBasicChunk('ICCP', image.data.icc.raw)); }
           if (image.data.extended.hasEXIF) { chunk[8] |= 0b00001000; out.push(...createBasicChunk('EXIF', image.data.exif.raw)); }
           if (image.data.extended.hasXMP) { chunk[8] |= 0b00000100; out.push(...createBasicChunk('XMP ', image.data.xmp.raw)); }
           if ((image.data.alph) || ((image.data.vp8l) && (image.data.vp8l.alpha))) { chunk[8] |= 0b00010000; }
           if (image.data.alph) { out.push(...createBasicChunk('ALPH', image.data.alph.raw)); }
-          if (image.data.vp8) { out.push(...createBasicChunk('VP8 ', image.data.vp8.raw)); }
-          else if (image.data.vp8l) { out.push(...createBasicChunk('VP8L', image.data.vp8l.raw)); }
         }
         break;
       default: throw new Error('Unknown image type');
