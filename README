@@ -77,6 +77,7 @@ async .replaceFrame(path, frame)
 
 async .muxAnim(options)
   A convenience function to remux this image preserving settings. See the static .muxAnim function below for more information
+  Passing `true` for `exif`, `iccp`, or `xmp` will preserve whichever, if any, of those chunks exist in the original.
 
 async .save(path = this.path)
   A convenience function to save any modifications made to this image, such as adding EXIF metadata.
@@ -124,6 +125,8 @@ async Image.muxAnim(options)
         `true` causes the background color to be drawn under the frame
         `false` draws the new frame directly
         Default is `false` (defined above)
+    `exif`/`iccp`/`xmp`
+      Set EXIF/ICCP/XMP chunks in the animation. Note that there is no verification whatsoever that the data passed is valid
 
 async Image.save(path, image)
   Save the given WebP `image` to `path`.

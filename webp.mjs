@@ -81,7 +81,7 @@ class Image {
     if (!this.loaded) { throw new Error('No image loaded'); }
     this.data.type = constants.TYPE_EXTENDED;
     this.data.extended = {
-      hasICC: false,
+      hasICCP: false,
       hasAlpha: false,
       hasEXIF: false,
       hasXMP: false,
@@ -94,14 +94,14 @@ class Image {
     header.write('RIFF', 0);
     header.write('WEBP', 8);
     out.push(header);
-    if ((this.data.extended.hasICC) ||
+    if ((this.data.extended.hasICCP) ||
         (this.data.extended.hasEXIF) ||
         (this.data.extended.hasXMP) ||
         ((frame.vp8) && (frame.vp8.alpha))) {
       chunk = Buffer.alloc(18);
       chunk.write('VP8X', 0);
       chunk.writeUInt32LE(10, 4);
-      if (this.data.extended.hasICC) { chunk[8] |= 0b00100000; }
+      if (this.data.extended.hasICCP) { chunk[8] |= 0b00100000; }
       if (((frame.vp8l) && (frame.vp8l.alpha)) ||
           ((frame.vp8) && (frame.vp8.alpha))) { chunk[8] |= 0b00010000; }
       if (this.data.extended.hasEXIF) { chunk[8] |= 0b00001000; }
@@ -116,7 +116,7 @@ class Image {
       out.push(...createBasicChunk('VP8 ', frame.vp8.raw));
     } else { throw new Error('Frame has no VP8/VP8L?'); }
     if (this.type == constants.TYPE_EXTENDED) {
-      if (this.data.extended.hasICC) { out.push(...createBasicChunk('ICCP', this.data.icc.raw)); }
+      if (this.data.extended.hasICCP) { out.push(...createBasicChunk('ICCP', this.data.iccp.raw)); }
       if (this.data.extended.hasEXIF) { out.push(...createBasicChunk('EXIF', this.data.exif.raw)); }
       if (this.data.extended.hasXMP) { out.push(...createBasicChunk('XMP ', this.data.xmp.raw)); }
     }
@@ -175,7 +175,7 @@ class Image {
     this.anim.frames[frame].width = r.width;
     this.anim.frames[frame].height = r.height;
   }
-  async muxAnim({ path, bgColor = [255,255,255,255], loops = 0 }={}) { return Image.muxAnim({ path, bgColor, loops, frames: this.frames }); }
+  async muxAnim({ path, bgColor = [255,255,255,255], loops = 0, exif = false, iccp = false, xmp = false }={}) { return Image.muxAnim({ path, bgColor, loops, frames: this.frames, exif: exif ? this.exif : undefined, iccp: iccp ? this.iccp : undefined, xmp: xmp ? this.xmp : undefined }); }
   async save(path = this.path) { return Image.save(path, this); }
 
   async #readHeader(fd) {
@@ -234,7 +234,7 @@ class Image {
     if (bytesRead != size) { throw new Error('Reached end of file while reading VP8X chunk'); }
     return {
       raw: buf,
-      hasICC:     !!(buf[0]&0b00100000),
+      hasICCP:    !!(buf[0]&0b00100000),
       hasAlpha:   !!(buf[0]&0b00010000),
       hasEXIF:    !!(buf[0]&0b00001000),
       hasXMP:     !!(buf[0]&0b00000100),
@@ -401,13 +401,15 @@ class Image {
           chunk.writeUIntLE(_width, 12, 3);
           chunk.writeUIntLE(_height, 15, 3);
           out.push(chunk);
-          if (image.data.vp8) { out.push(...createBasicChunk('VP8 ', image.data.vp8.raw)); }
+          if ((image.data.alph) || ((image.data.vp8l) && (image.data.vp8l.alpha))) { chunk[8] |= 0b00010000; }
+          if (image.data.vp8) {
+            if (image.data.alph) { out.push(...createBasicChunk('ALPH', image.data.alph.raw)); }
+            out.push(...createBasicChunk('VP8 ', image.data.vp8.raw));
+          }
           else if (image.data.vp8l) { out.push(...createBasicChunk('VP8L', image.data.vp8l.raw)); }
-          if (image.data.extended.hasICC) { chunk[8] |= 0b00100000; out.push(...createBasicChunk('ICCP', image.data.icc.raw)); }
+          if (image.data.extended.hasICCP) { chunk[8] |= 0b00100000; out.push(...createBasicChunk('ICCP', image.data.iccp.raw)); }
           if (image.data.extended.hasEXIF) { chunk[8] |= 0b00001000; out.push(...createBasicChunk('EXIF', image.data.exif.raw)); }
           if (image.data.extended.hasXMP) { chunk[8] |= 0b00000100; out.push(...createBasicChunk('XMP ', image.data.xmp.raw)); }
-          if ((image.data.alph) || ((image.data.vp8l) && (image.data.vp8l.alpha))) { chunk[8] |= 0b00010000; }
-          if (image.data.alph) { out.push(...createBasicChunk('ALPH', image.data.alph.raw)); }
         }
         break;
       default: throw new Error('Unknown image type');
@@ -418,8 +420,8 @@ class Image {
     for (let i = 0, l = out.length; i < l; i++) { await fs.write(fp, out[i], 0, undefined, undefined); }
     await fs.close(fp);
   }
-  static async muxAnim({ path, frames, width = 0, height = 0, bgColor = [255,255,255,255], loops = 0, delay = 100, x = 0, y = 0, blend = true, dispose = false }={}) {
-    let header = Buffer.alloc(12), chunk = Buffer.alloc(18), out = [], img, alpha = false, size, _w = 0, _h = 0;
+  static async muxAnim({ path, frames, width = 0, height = 0, bgColor = [255,255,255,255], loops = 0, delay = 100, x = 0, y = 0, blend = true, dispose = false, exif = undefined, iccp = undefined, xmp = undefined }={}) {
+    let header = Buffer.alloc(12), chunk = vp8x = Buffer.alloc(18), out = [], img, alpha = false, size, _w = 0, _h = 0;
     let _width = width-1, _height = height-1;
     if (frames.length == 0) { throw new Error('No frames to mux'); }
     else if ((_width <= 0) || (_width > (1<<24))) { throw new Error('Width out of range'); }
@@ -538,6 +540,9 @@ class Image {
     }
     if (width == 0) { out[1].writeUIntLE(_w-1, 12, 3); }
     if (height == 0) { out[1].writeUIntLE(_h-1, 15, 3); }
+    if (iccp) { vp8x[8] |= 0b00100000; out.push(...createBasicChunk('ICCP', iccp)); }
+    if (exif) { vp8x[8] |= 0b00001000; out.push(...createBasicChunk('EXIF', exif)); }
+    if (xmp) { vp8x[8] |= 0b00000100; out.push(...createBasicChunk('XMP ', xmp)); }
     size = 4; for (let i = 1, l = out.length; i < l; i++) { size += out[i].length; }
     header.writeUInt32LE(size, 4);
     if (alpha) { out[1][8] |= 0b00010000; }
