@@ -175,7 +175,7 @@ class Image {
     this.anim.frames[frame].width = r.width;
     this.anim.frames[frame].height = r.height;
   }
-  async muxAnim({ path, bgColor = [255,255,255,255], loops = 0, exif = false, iccp = false, xmp = false }={}) { return Image.muxAnim({ path, bgColor, loops, frames: this.frames, exif: exif ? this.exif : undefined, iccp: iccp ? this.iccp : undefined, xmp: xmp ? this.xmp : undefined }); }
+  async muxAnim({ path, bgColor = [255,255,255,255], loops = 0, exif = false, iccp = false, xmp = false }={}) { return Image.muxAnim({ path, width: this.width, height: this.height, bgColor, loops, frames: this.anim.frames, exif: exif ? this.exif : undefined, iccp: iccp ? this.iccp : undefined, xmp: xmp ? this.xmp : undefined }); }
   async save(path = this.path) { return Image.save(path, this); }
 
   async #readHeader(fd) {
@@ -297,7 +297,7 @@ class Image {
           break;
       }
       cursor += header.size+1;
-      if (header.size&1) { cursor++; }
+      // if (header.size&1) { cursor++; }
       if (cursor >= buf.length) { keepLooping = false; }
     }
     return out;
@@ -421,7 +421,7 @@ class Image {
     await fs.close(fp);
   }
   static async muxAnim({ path, frames, width = 0, height = 0, bgColor = [255,255,255,255], loops = 0, delay = 100, x = 0, y = 0, blend = true, dispose = false, exif = undefined, iccp = undefined, xmp = undefined }={}) {
-    let header = Buffer.alloc(12), chunk = vp8x = Buffer.alloc(18), out = [], img, alpha = false, size, _w = 0, _h = 0;
+    let header = Buffer.alloc(12), chunk = Buffer.alloc(18), vp8x = Buffer.alloc(18), out = [], img, alpha = false, size, _w = 0, _h = 0;
     let _width = width-1, _height = height-1;
     if (frames.length == 0) { throw new Error('No frames to mux'); }
     else if ((_width <= 0) || (_width > (1<<24))) { throw new Error('Width out of range'); }
