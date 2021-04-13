@@ -57,6 +57,7 @@ class Image {
   get type() { return this.loaded ? this.data.type : undefined; }
   get hasAnim() { return this.loaded ? this.data.extended ? this.data.extended.hasAnim : false : false; }
   get anim() { return this.hasAnim ? this.data.anim : undefined; }
+  get frames() { return this.anim ? this.anim.frames : undefined; }
   get frameCount() { return this.anim ? this.anim.frameCount : 0; }
   get iccp() { return this.data.extended ? this.data.extended.hasICCP ? this.data.iccp.raw : undefined : undefined; }
   set iccp(raw) {
@@ -297,7 +298,6 @@ class Image {
           break;
       }
       cursor += header.size+1;
-      if (header.size&1) { cursor++; }
       if (cursor >= buf.length) { keepLooping = false; }
     }
     return out;
@@ -421,12 +421,12 @@ class Image {
     await fs.close(fp);
   }
   static async muxAnim({ path, frames, width = 0, height = 0, bgColor = [255,255,255,255], loops = 0, delay = 100, x = 0, y = 0, blend = true, dispose = false, exif = undefined, iccp = undefined, xmp = undefined }={}) {
-    let header = Buffer.alloc(12), chunk = vp8x = Buffer.alloc(18), out = [], img, alpha = false, size, _w = 0, _h = 0;
+    let header = Buffer.alloc(12), chunk = Buffer.alloc(18), vp8x = chunk, out = [], img, alpha = false, size, _w = 0, _h = 0;
     let _width = width-1, _height = height-1;
     if (frames.length == 0) { throw new Error('No frames to mux'); }
-    else if ((_width <= 0) || (_width > (1<<24))) { throw new Error('Width out of range'); }
-    else if ((_height <= 0) || (_height > (1<<24))) { throw new Error('Height out of range'); }
-    else if ((_height*_width) > (Math.pow(2,32)-1)) { throw new Error(`Width*height too large (${_width}, ${_height})`); }
+    else if ((width != 0) && ((_width <= 0) || (_width > (1<<24)))) { throw new Error('Width out of range'); }
+    else if ((height != 0) && ((_height <= 0) || (_height > (1<<24)))) { throw new Error('Height out of range'); }
+    else if ((width != 0) && (height != 0) && ((_height*_width) > (Math.pow(2,32)-1))) { throw new Error(`Width*height too large (${_width}, ${_height})`); }
     else if ((loops < 0) || (loops >= (1<<24))) { throw new Error('Loops out of range'); }
     else if ((delay < 0) || (delay >= (1<<24))) { throw new Error('Delay out of range'); }
     else if ((x < 0) || (x >= (1<<24))) { throw new Error('X out of range'); }

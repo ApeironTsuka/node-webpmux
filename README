@@ -38,6 +38,9 @@ Image
 .hasAnim (read-only)
   A boolean flag for easily checking if the image is an animation
 
+.frames
+  Returns the array of frames, if any, or undefined
+
 .frameCount (read-only)
   The number of frames in the image's animation, or 0 if it's not an animation
 
