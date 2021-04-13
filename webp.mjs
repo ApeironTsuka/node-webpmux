@@ -297,7 +297,8 @@ class Image {
           keepLooping = false;
           break;
       }
-      cursor += header.size+1;
+      cursor += header.size;
+      if (header.size&1) { cursor++; }
       if (cursor >= buf.length) { keepLooping = false; }
     }
     return out;
@@ -479,8 +480,8 @@ class Image {
             let c = img.data.vp8;
             _w = c.width > _w ? c.width : _w;
             _h = c.height > _h ? c.height : _h;
-            size += c.raw.length+8;
             imgData = createBasicChunk('VP8 ', c.raw);
+            size += c.raw.length+8+(c.raw.length&1);
           }
           break;
         case constants.TYPE_LOSSLESS:
@@ -488,9 +489,9 @@ class Image {
             let c = img.data.vp8l;
             _w = c.width > _w ? c.width : _w;
             _h = c.height > _h ? c.height : _h;
-            size += c.raw.length+8;
             if (c.alpha) { alpha = true; }
             imgData = createBasicChunk('VP8L', c.raw);
+            size += c.raw.length+8+(c.raw.length&1);
           }
           break;
         case constants.TYPE_EXTENDED:
@@ -523,14 +524,14 @@ class Image {
               if (img.data.alph) {
                 alpha = true;
                 imgData.push(...createBasicChunk('ALPH', img.data.alph.raw));
-                size += img.data.alph.raw.length+8;
+                size += img.data.alph.raw.length+8+(img.data.alph.raw.length&1);
               }
               imgData.push(...createBasicChunk('VP8 ', img.data.vp8.raw));
-              size += img.data.vp8.raw.length+8;
+              size += img.data.vp8.raw.length+8+(img.data.vp8.raw.length&1);
             } else if (img.data.vp8l) {
               imgData = createBasicChunk('VP8L', img.data.vp8l.raw);
               if (img.data.vp8l.alpha) { alpha = true; }
-              size += img.data.vp8l.raw.length+8;
+              size += img.data.vp8l.raw.length+8+(img.data.vp8l.raw.length&1);
             }
           }
           break;
@@ -538,8 +539,8 @@ class Image {
       }
       if (keepChunk) { chunk.writeUInt32LE(size, 4); out.push(chunk, ...imgData); }
     }
-    if (width == 0) { out[1].writeUIntLE(_w-1, 12, 3); }
-    if (height == 0) { out[1].writeUIntLE(_h-1, 15, 3); }
+    if (width == 0) { vp8x.writeUIntLE(_w-1, 12, 3); }
+    if (height == 0) { vp8x.writeUIntLE(_h-1, 15, 3); }
     if (iccp) { vp8x[8] |= 0b00100000; out.push(...createBasicChunk('ICCP', iccp)); }
     if (exif) { vp8x[8] |= 0b00001000; out.push(...createBasicChunk('EXIF', exif)); }
     if (xmp) { vp8x[8] |= 0b00000100; out.push(...createBasicChunk('XMP ', xmp)); }
