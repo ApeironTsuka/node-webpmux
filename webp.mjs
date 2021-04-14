@@ -278,6 +278,7 @@ class Image {
           if (!out.vp8) {
             out.type = constants.TYPE_LOSSY;
             out.vp8 = this.#readChunk_VP8_buf(buf, header.size, cursor);
+            if (out.alph) { out.vp8.alpha = true; }
           }
           break;
         case 'VP8L':
@@ -287,9 +288,9 @@ class Image {
           }
           break;
         case 'ALPH':
-          if (out.vp8) {
+          if (!out.alph) {
             out.alph = this.#readChunk_ALPH_buf(buf, header.size, cursor);
-            out.vp8.alpha = true;
+            if (out.vp8) { out.vp8.alpha = true; }
           }
           break;
         case '\x00\x00\x00\x00':
@@ -305,12 +306,12 @@ class Image {
   }
   async #readChunk_ALPH(fd, size) { return this.#readChunk_raw('ALPH', fd, size); }
   #readChunk_ALPH_buf(buf, size, cursor) {
-    if (cusor >= buf.length) { throw new Error('Reached end of buffer while reading ALPH chunk'); }
+    if (cursor >= buf.length) { throw new Error('Reached end of buffer while reading ALPH chunk'); }
     return { raw: buf.slice(cursor, cursor+size) };
   }
   async #readChunk_ICCP(fd, size) { return this.#readChunk_raw('ICCP', fd, size); }
   async #readChunk_EXIF(fd, size) { return this.#readChunk_raw('EXIF', fd, size); }
-  async #readChunk_XMP(fd, size) { return this.#readChunk_raw('XML', fd, size); }
+  async #readChunk_XMP(fd, size) { return this.#readChunk_raw('XMP ', fd, size); }
   async #readChunk_Skip(fd, size) {
     let buf = Buffer.alloc(size), discard = Buffer.alloc(1);
     let { bytesRead } = await fs.read(fd, buf, 0, size, undefined);
@@ -546,7 +547,7 @@ class Image {
     if (xmp) { vp8x[8] |= 0b00000100; out.push(...createBasicChunk('XMP ', xmp)); }
     size = 4; for (let i = 1, l = out.length; i < l; i++) { size += out[i].length; }
     header.writeUInt32LE(size, 4);
-    if (alpha) { out[1][8] |= 0b00010000; }
+    if (alpha) { vp8x[8] |= 0b00010000; }
     let fp = await fs.open(path, 'w');
     for (let i = 0, l = out.length; i < l; i++) { await fs.write(fp, out[i], 0, undefined, undefined); }
     await fs.close(fp);
