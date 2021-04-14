@@ -484,7 +484,13 @@ class Image {
             let c = img.data.vp8;
             _w = c.width > _w ? c.width : _w;
             _h = c.height > _h ? c.height : _h;
-            imgData = createBasicChunk('VP8 ', c.raw);
+            imgData = [];
+            if (img.data.alph) {
+              alpha = true;
+              imgData.push(...createBasicChunk('ALPH', img.data.alph.raw));
+              size += img.data.alph.raw.length+8+(img.data.alph.raw.length&1);
+            }
+            imgData.push(...createBasicChunk('VP8 ', c.raw));
             size += c.raw.length+8+(c.raw.length&1);
           }
           break;
