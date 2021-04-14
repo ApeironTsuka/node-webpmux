@@ -131,14 +131,14 @@ class Image {
     let start = 0, end = this.frameCount;
     if (end == 0) { throw new Error('This WebP isn\'t an animation'); }
     if (frame != -1) { start = end = frame; }
-    for (let i = start; i <= end; i++) {
+    for (let i = start; i < end; i++) {
       await this.#demuxFrame((`${path}/${prefix}_${i}.webp`).replace(/#FNAME#/g, basename(this.path, '.webp')), this.anim.frames[i]);
     }
   }
   async replaceFrame(path, frame) {
     if (!this.hasAnim) { throw new Error('WebP isn\'t animated'); }
     if ((frame < 0) || (frame >= this.frameCount)) { throw new Error(`Frame index ${frame} out of bounds (0<=index<${this.frameCount})`); }
-    let r = new Image();
+    let r = new Image(), fr = this.anim.frames[frame];
     await r.load(path);
     switch (r.type) {
       case constants.TYPE_LOSSY:
@@ -149,32 +149,35 @@ class Image {
         break;
       default: throw new Error('Unknown WebP type');
     }
-    switch (this.anim.frames[frame].type) {
+    switch (fr.type) {
       case constants.TYPE_LOSSY:
-        if (this.anim.frames[frame].vp8.alpha) { delete this.anim.frames[frame].alph; }
-        delete this.anim.frames[frame].vp8;
+        if (fr.vp8.alpha) { delete fr.alph; }
+        delete fr.vp8;
         break;
       case constants.TYPE_LOSSLESS:
-        delete this.anim.frames[frame].vp8l;
+        delete fr.vp8l;
         break;
       default: throw new Error('Unknown frame type');
     }
     switch (r.type) {
       case constants.TYPE_LOSSY:
-        this.anim.frames[frame].vp8 = r.data.vp8;
+        fr.vp8 = r.data.vp8;
+        fr.type = constants.TYPE_LOSSY;
         break;
       case constants.TYPE_LOSSLESS:
-        this.anim.frames[frame].vp8l = r.data.vp8l;
+        fr.vp8l = r.data.vp8l;
+        fr.type = constants.TYPE_LOSSLESS;
         break;
       case constants.TYPE_EXTENDED:
         if (r.data.vp8) {
-          this.anim.frames[frame].vp8 = r.data.vp8;
-          if (r.data.vp8.alpha) { this.anim.frames[frame].alph = r.data.alph; }
-        } else if (r.data.vp8l) { this.anim.frames[frame].vp8l = r.data.vp8l; }
+          fr.vp8 = r.data.vp8;
+          if (r.data.vp8.alpha) { fr.alph = r.data.alph; }
+          fr.type = constants.TYPE_LOSSY;
+        } else if (r.data.vp8l) { fr.vp8l = r.data.vp8l; fr.type = constants.TYPE_LOSSLESS; }
         break;
     }
-    this.anim.frames[frame].width = r.width;
-    this.anim.frames[frame].height = r.height;
+    fr.width = r.width;
+    fr.height = r.height;
   }
   async muxAnim({ path, bgColor = this.hasAnim ? this.anim.backgroundColor : [255,255,255,255], loops = this.hasAnim ? this.anim.loopCount : 0, exif = !!this.exif, iccp = !!this.iccp, xmp = !!this.xmp, width = this.width, height = this.height }={}) { return Image.muxAnim({ path, bgColor, loops, frames: this.frames, width, height, exif: exif ? this.exif : undefined, iccp: iccp ? this.iccp : undefined, xmp: xmp ? this.xmp : undefined }); }
   async save(path = this.path) { return Image.save(path, this); }
