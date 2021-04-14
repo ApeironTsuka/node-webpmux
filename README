@@ -80,8 +80,9 @@ async .replaceFrame(path, frame)
 
 async .muxAnim(options)
   A convenience function to remux this image preserving settings. See the static .muxAnim function below for more information
-  Passing `true` for `exif`, `iccp`, or `xmp` will preserve whichever, if any, of those chunks exist in the original.
-  You can pass `width` and `height` in desired. The default is to recalculate the width/height based on frame sizes/offsets within the animation.
+  The `width`, `height`, `bgColor`, `loops`, `exif`, `iccp`, and `xmp` options default to the settings of this image.
+  Passing `false` to `exif`, `iccp`, or `xmp` will disable saving those
+  Should pass `0` to both `width` and `height` if any frame sizes were changed
 
 async .save(path = this.path)
   A convenience function to save any modifications made to this image, such as adding EXIF metadata.

@@ -176,7 +176,7 @@ class Image {
     this.anim.frames[frame].width = r.width;
     this.anim.frames[frame].height = r.height;
   }
-  async muxAnim({ path, bgColor = [255,255,255,255], loops = 0, exif = false, iccp = false, xmp = false, width = 0, height = 0 }={}) { return Image.muxAnim({ path, bgColor, loops, frames: this.frames, width, height, exif: exif ? this.exif : undefined, iccp: iccp ? this.iccp : undefined, xmp: xmp ? this.xmp : undefined }); }
+  async muxAnim({ path, bgColor = this.hasAnim ? this.anim.backgroundColor : [255,255,255,255], loops = this.hasAnim ? this.anim.loopCount : 0, exif = !!this.exif, iccp = !!this.iccp, xmp = !!this.xmp, width = this.width, height = this.height }={}) { return Image.muxAnim({ path, bgColor, loops, frames: this.frames, width, height, exif: exif ? this.exif : undefined, iccp: iccp ? this.iccp : undefined, xmp: xmp ? this.xmp : undefined }); }
   async save(path = this.path) { return Image.save(path, this); }
 
   async #readHeader(fd) {
