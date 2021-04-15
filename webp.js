@@ -10,7 +10,7 @@ const fs = {
 };
 const nullByte = Buffer.alloc(1);
 nullByte[0] = 0;
-
+module.exports = {};
 function VP8Width(data) {
   let n = (data[7]<<8)|data[6];
   return n&0b0011111111111111;
