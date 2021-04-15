@@ -1,10 +1,13 @@
 <h1 align="center">node-webpmux</h1>
 <p1> Node-webpmux is a mostly complete re-implementation of webpmux in pure JavaScript. Can load "simple" lossy/lossless images as well as animations. </p1>
 
+## Install: 
+``` npm install node-webpmux-commonjs ```
+
 ## Basic usage: 
 ```js
 //require the package
-const WebP = require('node-webpmux').default;
+const WebP = require('node-webpmux-commonjs').default;
 //create an image instance
 let img = new WebP.Image();
 // Load an animation
@@ -89,39 +92,49 @@ await img.muxAnim({ path: 'img.webp' });
 
 ## Static functions:
 
-async Image.muxAnim(options)
+```async Image.muxAnim(options)```
   Mux a WebP image
 
   "options": an object with the following properties
   
-  "width"/"height": Width/height of the image
+   - "width"/"height": Width/height of the image
      
-   Range 0-16777216.
+   **-** Range 0-16777216.
 
    **NOTE:** The product of width*height must NOT exceed (2**32)-1
    
-   Passing 0 to either flags it for being set automatically
+   **-** Passing 0 to either flags it for being set automatically
     
-"bgColor"
-      The background color of the animation
-      Format is [r, g, b, a]
-      Defaults to [255, 255, 255, 255]
-    `loops`
-      Number of times the animation loops
-      Range is 0-65535, with 0 being an infinite loop
-      Default is 0
-    `x`/`y`/`delay`/`blend`/`dispose`
-      Changes the default frame x/y position where a frame omits it (see below)
-      `x`/`y` defaults to 0
-      `delay` defaults to 100
-      `blend` defaults to `true`
-      `dispose` defaults to `false`
-    `frames`
-      An array of objects defining each frame of the animation with the following properties
-      `x`/`y`
-        x,y offset to place the frame within the animation
-        Range 0-16777215
-        Default is 0,0 (defined above)
+   - "bgColor": The background color of the animation
+      
+   **-** Format is [r, g, b, a]
+
+   **-** Defaults to [255, 255, 255, 255]
+    
+   - "loops": Number of times the animation loops
+      
+   **-** Range is 0-65535, with 0 being an infinite loop
+ 
+   **-** Default is 0
+   
+   - "x"/"y"/"delay"/"blend"/"dispose": Changes the default frame x/y position where a frame omits it (see below)
+
+   **-** "x"/"y": defaults to 0
+
+   **-** "delay" defaults to 100
+
+   **-** "blend" defaults to `true`
+
+   **-** "dispose" defaults to `false`
+
+   "frames": An array of objects defining each frame of the animation with the following properties 
+
+   - "x"/"y": x,y offset to place the frame within the animation
+
+   **-** Range 0-16777215
+
+   Default is 0,0 (defined above)
+
       `delay`
         Length of this frame in miliseconds
         Range 0-16777215
