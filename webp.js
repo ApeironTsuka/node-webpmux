@@ -1,7 +1,7 @@
 // https://developers.google.com/speed/webp/docs/riff_container
-import _fs from 'fs';
-import { promisify } from 'util';
-import { basename } from 'path';
+const _fs = require('fs');
+const { promisify } = require('util');
+const { basename } = require('path');
 const fs = {
   read: promisify(_fs.read),
   write: promisify(_fs.write),
@@ -10,11 +10,7 @@ const fs = {
 };
 const nullByte = Buffer.alloc(1);
 nullByte[0] = 0;
-export const constants = {
-  TYPE_LOSSY: 0,
-  TYPE_LOSSLESS: 1,
-  TYPE_EXTENDED: 2
-};
+
 function VP8Width(data) {
   let n = (data[7]<<8)|data[6];
   return n&0b0011111111111111;
@@ -562,10 +558,15 @@ class Image {
     await fs.close(fp);
   }
 }
-export default {
+module.exports.default = {
   TYPE_LOSSY: constants.TYPE_LOSSY,
   TYPE_LOSSLESS: constants.TYPE_LOSSLESS,
   TYPE_EXTENDED: constants.TYPE_EXTENDED,
   Image
 };
 
+module.exports.constants = {
+  TYPE_LOSSY: 0,
+  TYPE_LOSSLESS: 1,
+  TYPE_EXTENDED: 2
+};
