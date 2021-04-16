@@ -95,64 +95,72 @@ await img.muxAnim({ path: 'img.webp' });
 ```async Image.muxAnim(options)```
   Mux a WebP image
 
-  "options": an object with the following properties
+   **-** "options": an object with the following properties
   
-   - "width"/"height": Width/height of the image
+   **-** "width"/"height": Width/height of the image
      
-   **-** Range 0-16777216.
+   - Range 0-16777216.
 
    **NOTE:** The product of width*height must NOT exceed (2**32)-1
    
-   **-** Passing 0 to either flags it for being set automatically
+   - Passing 0 to either flags it for being set automatically
     
-   - "bgColor": The background color of the animation
+   **-**  "bgColor": The background color of the animation
       
-   **-** Format is [r, g, b, a]
+   - Format is [r, g, b, a]
 
-   **-** Defaults to [255, 255, 255, 255]
+   - Defaults to [255, 255, 255, 255]
     
-   - "loops": Number of times the animation loops
+   **-**  "loops": Number of times the animation loops
       
-   **-** Range is 0-65535, with 0 being an infinite loop
+   - Range is 0-65535, with 0 being an infinite loop
  
-   **-** Default is 0
+   - Default is 0
    
-   - "x"/"y"/"delay"/"blend"/"dispose": Changes the default frame x/y position where a frame omits it (see below)
+   **-**  "x"/"y"/"delay"/"blend"/"dispose": Changes the default frame x/y position where a frame omits it (see below)
 
-   **-** "x"/"y": defaults to 0
+   - "x"/"y": defaults to 0
 
-   **-** "delay" defaults to 100
+   - "delay" defaults to 100
 
-   **-** "blend" defaults to `true`
+   - "blend" defaults to `true`
 
-   **-** "dispose" defaults to `false`
+   - "dispose" defaults to `false`
 
-   "frames": An array of objects defining each frame of the animation with the following properties 
+   **-** "frames": An array of objects defining each frame of the animation with the following properties 
 
    - "x"/"y": x,y offset to place the frame within the animation
 
-   **-** Range 0-16777215
+   - Range 0-16777215
 
-   Default is 0,0 (defined above)
+   - Default is 0,0 (defined above)
 
-      `delay`
-        Length of this frame in miliseconds
-        Range 0-16777215
-        Default is 100 (defined above)
-        According to the documentation, delays <= 10ms are WebP implementation defined, and many tools/browsers/etc assign their own minimum-allowed delay.
-      `blend`
-        Boolean flag for whether or not to use alpha blending when drawing the frame
-        Default is `true` (defined above)
-      `dispose`
-        Boolean flag to control frame disposal method
-        `true` causes the background color to be drawn under the frame
-        `false` draws the new frame directly
-        Default is `false` (defined above)
-    `exif`/`iccp`/`xmp`
-      Set EXIF/ICCP/XMP chunks in the animation. Note that there is no verification whatsoever that the data passed is valid
+   **-**  "delay": Length of this frame in miliseconds
 
-async Image.save(path, image)
-  Save the given WebP `image` to `path`.
+   - Range 0-16777215
+    
+   - Default is 100 (defined above)
+    
+   - According to the documentation, delays <= 10ms are WebP implementation defined, and many tools/browsers/etc assign their own minimum-allowed delay.
+   
+   **-** "blend": Boolean flag for whether or not to use alpha blending when drawing the frame
+        
+   - Default is "true" (defined above)
+      
+   **-**  "dispose": Boolean flag to control frame disposal method
+
+   - "true" causes the background color to be drawn under the frame
+   
+   - "false" draws the new frame directly
+   
+   - Default is false" (defined above)
+    
+   **-** "exif"/"iccp"/"xmp": Set EXIF/ICCP/XMP chunks in the animation. Note that there is no verification whatsoever that the data passed is valid
+
+```async Image.save(path, image)```
+
+  Save the given WebP "image" to "path".
+
   Does not currently support animations (use Image.muxAnim above instead).
 
 == Animation object ==
