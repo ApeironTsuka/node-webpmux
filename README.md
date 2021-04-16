@@ -19,7 +19,7 @@ await img.replaceFrame('different.webp', 3);
 // Save over the old one
 await img.muxAnim({ path: 'img.webp' });
 ```
-## Class properties
+## Class properties:
 
 .width (read-only)
   The width of the loaded image
@@ -61,30 +61,30 @@ await img.muxAnim({ path: 'img.webp' });
 
   Dump the individual, unprocessed WebP frames to a directory
 
-  "path": The directory to dump the frames to
+  **-** "path": The directory to dump the frames to
   
-  "prefix": What to prefix the frame names with. Default is the file name of the original image (without .webp).
+  **-** "prefix": What to prefix the frame names with. Default is the file name of the original image (without .webp).
   
-  Format is <prefix>_<frame number>.webp
+  - Format is <prefix>_<frame number>.webp
   
-  "frame": What frame to dump. Defaults to -1, which has it dump all available frames.
+  **-** "frame": What frame to dump. Defaults to -1, which has it dump all available frames.
     
 
 ```async .replaceFrame(path, frame)```
   Replaces a frame in the animation with another image. All other frame settings are preserved.
 
-  "path": The new frame image  
+  **-** "path": The new frame image  
 
-  "frame": Which frame to replace. Frame indexes are 0-based
+  **-** "frame": Which frame to replace. Frame indexes are 0-based
 
 ```async .muxAnim(options)```
   A convenience function to remux this image preserving settings. See the static .muxAnim function below for more information
 
-  The "width", "height", "bgColor", "loops", "exif", "iccp", and "xmp" options default to the settings of this image.
+  **-** The "width", "height", "bgColor", "loops", "exif", "iccp", and "xmp" options default to the settings of this image.
   
-  Passing false to "exif, "iccp, or "xmp" will disable saving those
+  **-** Passing false to "exif, "iccp, or "xmp" will disable saving those
   
-  Should pass 0 to both width and height if any frame sizes were changed
+  **-** Should pass 0 to both width and height if any frame sizes were changed
 
 ```async .save(path = this.path)```
 
@@ -163,19 +163,19 @@ await img.muxAnim({ path: 'img.webp' });
 
   Does not currently support animations (use Image.muxAnim above instead).
 
-== Animation object ==
+## Animation object:
 
-  .anim
-    An object with the following properties, or undefined if not an animation
-    `raw`
-      A Buffer containing the raw data for the ANIM chunk. Mainly for internal use
-    `backgroundColor`
-      The background color in [r, g, b, a] format
-    `loopCount`
-      The loop count
-    `frames`
-      Array in the following format
-      [
+  **-** ".anim": An object with the following properties, or undefined if not an animation
+  - "raw": A Buffer containing the raw data for the ANIM chunk. Mainly for internal use
+
+  - "backgroundColor": The background color in [r, g, b, a] format
+  
+  - "loopCount": The loop count
+  
+  - "frames": Array in the following format
+  
+  ```js 
+[
         {
           raw, // The raw data for this ANMF chunk
           type, // The type of image this frame is, from the constants table
@@ -188,10 +188,12 @@ await img.muxAnim({ path: 'img.webp' });
           vp8l, // The raw, compressed WebP data for a lossless image
           alph // The raw, compressed WebP data for an alpha map. If this frame is lossy, it might have this
         },
-        ...
-      ]
-
-== The full layout for internal Image data ==
+        
+      
+]
+```
+## The full layout for internal Image data:
+```js
 {
   path, // The path loaded
   loaded, // Boolean flag for if this object has an image loaded
@@ -230,3 +232,4 @@ await img.muxAnim({ path: 'img.webp' });
     }
   }
 }
+```
