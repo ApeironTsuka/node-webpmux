@@ -476,6 +476,19 @@ class Image {
     }
     return writer.commit();
   }
+  async #demuxAnim({ path, buffers, frame, prefix, start, end } = {}) {
+    if (!this.hasAnim) { throw new Error("This image isn't an animation"); }
+    let _end = end == 0 ? this.frames.length : end, bufs = [];
+    if (start < 0) { start = 0; }
+    if (_end >= this.frames.length) { _end = this.frames.length - 1; }
+    if (start > _end) { let n = start; start = _end; _end = n; }
+    if (frame != -1) { start = _end = frame; }
+    for (let i = start; i <= _end; i++) {
+      if (path) { await this.#demuxFrameFile((`${path}/${prefix}_${i}.webp`).replace(/#FNAME#/g, basename(this.path, '.webp')), this.anim.frames[i]); }
+      else { bufs.push(this.#demuxFrameBuffer(i)); }
+    }
+    if (buffers) { return bufs; }
+  }
   async #replaceFrame(frame, path, buffer) {
     if (!this.hasAnim) { throw new Error("WebP isn't animated"); }
     if ((frame < 0) || (frame >= this.frames.length)) { throw new Error(`Frame index ${frame} out of bounds (0 <= index < ${this.frames.length})`); }
@@ -617,17 +630,8 @@ class Image {
       frames: []
     };
   }
-  async demuxAnim(path, { frame = -1, prefix = '#FNAME#', start = 0, end = 0 } = {}) {
-    let _end = end == 0 ? this.frames.length : end;
-    if (!this.hasAnim) { throw new Error("This image isn't an animation"); }
-    if (start < 0) { start = 0; }
-    if (_end >= this.frames.length) { _end = this.frames.length - 1; }
-    if (start > _end) { let n = start; start = _end; _end = n; }
-    if (frame != -1) { start = _end = frame; }
-    for (let i = start; i <= _end; i++) {
-      await this.#demuxFrameFile((`${path}/${prefix}_${i}.webp`).replace(/#FNAME#/g, basename(this.path, '.webp')), this.anim.frames[i]);
-    }
-  }
+  async demuxAnim(path, { frame = -1, prefix = '#FNAME#', start = 0, end = 0 } = {}) { return this.#demuxAnim({ path, frame, prefix, start, end }); }
+  async demuxAnimToBuffers({ frame = -1, start = 0, end = 0 } = {}) { return this.#demuxAnim({ buffers: true, frame, start, end }); }
   async replaceFrame(frame, path) { return this.#replaceFrame(frame, path); }
   async replaceFrameBuffer(frame, buffer) { return this.#replaceFrame(frame, undefined, buffer); }
   async save(path = this.path, { width = this.width, height = this.height, frames = this.frames, bgColor = this.hasAnim ? this.anim.bgColor : [ 255, 255, 255, 255 ], loops = this.hasAnim ? this.anim.loops : 0, delay = 100, x = 0, y = 0, blend = true, dispose = false, exif = !!this.exif, iccp = !!this.iccp, xmp = !!this.xmp } = {}) {

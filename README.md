@@ -93,6 +93,10 @@ Dump the individual, unprocessed WebP frames to a directory.
 * `start`: The first frame to dump. Defaults to the first frame.
 * `end`: The last frame to dump. Defaults to the last frame.
 
+##### `async .demuxAnimToBuffers({ frame = -1, start = 0, end = 0 })`
+Dump the individual, unprocessed WebP frames to an array of Buffers.
+* `frame`, `start`, and `end` all work the same as in `async .demuxAnim` above.
+
 ##### `async .replaceFrame(frame, path)`
 Replaces a frame in the animation with another image from disk. All other frame settings are preserved.
 * `frame`: Which frame to replace. Frame indexes are 0-based.
