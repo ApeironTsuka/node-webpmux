@@ -452,15 +452,14 @@ class Image {
     return this.#demuxFrame(writer, frame);
   }
   async #demuxFrame(writer, frame) {
+    let { hasICCP, hasEXIF, hasXMP } = this.data.extended ? this.data.extended : { hasICCP: false, hasEXIF: false, hasXMP: false }, hasAlpha = ((frame.vp8) && (frame.vp8.alpha));
     writer.writeFileHeader();
-    if ((this.type == constants.TYPE_EXTENDED) ||
-        ((frame.vp8) && (frame.vp8.alpha))) {
-      let { hasICCP, hasEXIF, hasXMP } = this.data.extended, hasAlpha = ((frame.vp8) && (frame.vp8.alpha));
+    if ((hasICCP) || (hasEXIF) || (hasXMP) || (hasAlpha)) {
       writer.writeChunk_VP8X({
         hasICCP,
         hasEXIF,
         hasXMP,
-        hasAlpha,
+        hasAlpha: ((frame.vp8l) && (frame.vp8l.alpha)) || hasAlpha,
         width: frame.width - 1,
         height: frame.height - 1
       });
@@ -470,7 +469,7 @@ class Image {
       if (frame.vp8.alpha) { writer.writeChunk_ALPH(frame.alph); }
       writer.writeChunk_VP8(frame.vp8);
     } else { throw new Error('Frame has no VP8/VP8L?'); }
-    if (this.type == constants.TYPE_EXTENDED) {
+    if ((hasICCP) || (hasEXIF) || (hasXMP) || (hasAlpha)) {
       if (this.data.extended.hasICCP) { writer.writeChunk_ICCP(this.data.iccp); }
       if (this.data.extended.hasEXIF) { writer.writeChunk_EXIF(this.data.exif); }
       if (this.data.extended.hasXMP) { writer.writeChunk_XMP(this.data.xmp); }
