@@ -473,7 +473,7 @@ class Image {
     if (this.type == constants.TYPE_EXTENDED) {
       if (this.data.extended.hasICCP) { writer.writeChunk_ICCP(this.data.iccp); }
       if (this.data.extended.hasEXIF) { writer.writeChunk_EXIF(this.data.exif); }
-      if (this.data.exnteded.hasXMP) { writer.writeChunk_XMP(this.data.xmp); }
+      if (this.data.extended.hasXMP) { writer.writeChunk_XMP(this.data.xmp); }
     }
     return writer.commit();
   }
