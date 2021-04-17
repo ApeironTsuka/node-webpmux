@@ -476,7 +476,7 @@ class Image {
     }
     return writer.commit();
   }
-  async #demuxAnim({ path, buffers, frame, prefix, start, end } = {}) {
+  async #demux({ path, buffers, frame, prefix, start, end } = {}) {
     if (!this.hasAnim) { throw new Error("This image isn't an animation"); }
     let _end = end == 0 ? this.frames.length : end, bufs = [];
     if (start < 0) { start = 0; }
@@ -630,8 +630,8 @@ class Image {
       frames: []
     };
   }
-  async demuxAnim(path, { frame = -1, prefix = '#FNAME#', start = 0, end = 0 } = {}) { return this.#demuxAnim({ path, frame, prefix, start, end }); }
-  async demuxAnimToBuffers({ frame = -1, start = 0, end = 0 } = {}) { return this.#demuxAnim({ buffers: true, frame, start, end }); }
+  async demux(path, { frame = -1, prefix = '#FNAME#', start = 0, end = 0 } = {}) { return this.#demux({ path, frame, prefix, start, end }); }
+  async demuxToBuffers({ frame = -1, start = 0, end = 0 } = {}) { return this.#demux({ buffers: true, frame, start, end }); }
   async replaceFrame(frame, path) { return this.#replaceFrame(frame, path); }
   async replaceFrameBuffer(frame, buffer) { return this.#replaceFrame(frame, undefined, buffer); }
   async save(path = this.path, { width = this.width, height = this.height, frames = this.frames, bgColor = this.hasAnim ? this.anim.bgColor : [ 255, 255, 255, 255 ], loops = this.hasAnim ? this.anim.loops : 0, delay = 100, x = 0, y = 0, blend = true, dispose = false, exif = !!this.exif, iccp = !!this.iccp, xmp = !!this.xmp } = {}) {

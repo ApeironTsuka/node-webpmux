@@ -13,7 +13,7 @@ let img = new WebP.Image();
 // Load an animation
 await img.load('img.webp');
 // Extract the (unprocessed) fourth frame
-await img.demuxAnim('.', { frame: 3 });
+await img.demux('.', { frame: 3 });
 // Replace the fourth frame with a new image from disk
 await img.replaceFrame(3, 'different.webp'); // This preserves the existing frame settings
 // Alternatively you can do
@@ -84,7 +84,7 @@ Tries to load the contents of `buffer` as a WebP image.
 ##### `.convertToAnim()`
 Sets the image up for being an animation.
 
-##### `async .demuxAnim(path, { frame = -1, prefix = '#FNAME#', start = 0, end = 0 })`
+##### `async .demux(path, { frame = -1, prefix = '#FNAME#', start = 0, end = 0 })`
 Dump the individual, unprocessed WebP frames to a directory.
 * `path`: The directory to dump the frames to.
 * `prefix`: What to prefix the frame names with. Default is the file name of the original image (without .webp).
@@ -93,9 +93,9 @@ Dump the individual, unprocessed WebP frames to a directory.
 * `start`: The first frame to dump. Defaults to the first frame.
 * `end`: The last frame to dump. Defaults to the last frame.
 
-##### `async .demuxAnimToBuffers({ frame = -1, start = 0, end = 0 })`
+##### `async .demuxToBuffers({ frame = -1, start = 0, end = 0 })`
 Dump the individual, unprocessed WebP frames to an array of Buffers.
-* `frame`, `start`, and `end` all work the same as in `async .demuxAnim` above.
+* `frame`, `start`, and `end` all work the same as in `async .demux` above.
 
 ##### `async .replaceFrame(frame, path)`
 Replaces a frame in the animation with another image from disk. All other frame settings are preserved.
@@ -307,3 +307,4 @@ Image.muxAnim and .muxAnim were merged into Image.save and .save respectively.
 `.anim.backgroundColor` renamed to `.anim.bgColor` for brevity and consisteny.
 `.anim.loopCount` renamed to `.anim.loop` for consistency.
 `.anim.frameCount` and `.frameCount` were removed. Should use `.anim.frames.length` and `.frames.length` respectively instead.
+`.demuxAnim()` was renamed to `.demux()`
