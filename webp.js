@@ -706,7 +706,7 @@ class Image {
     if ((method !== undefined) && ((method < 0) || (method > 6))) { throw new Error('Method out of range'); }
     let fr = this.frames[frame], { libwebp } = this, ret = libwebp.encodeImage(buf, width > 0 ? width : fr.width, height > 0 ? height : fr.height, { quality, exact, lossless, method }), img = new Image();
     if (ret.res !== encodeResults.SUCCESS) { return ret.res; }
-    await img.loadBuffer(ret.buf);
+    await img.loadBuffer(Buffer.from(ret.buf));
     switch (fr.type) {
       case constants.TYPE_LOSSY: delete fr.vp8; if (fr.alph) { delete fr.alph; } break;
       case constants.TYPE_LOSSLESS: delete fr.vp8l; break;
