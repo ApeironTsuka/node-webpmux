@@ -1,6 +1,6 @@
 # node-webpmux
 
-A mostly-complete pure Javascript re-implementation of webpmux.
+A mostly-complete pure Javascript re-implementation of webpmux.<br />
 Can load "simple" lossy/lossless images as well as animations.
 
 ### Install
@@ -25,9 +25,9 @@ await img.save({ path: 'newimg.webp' });
 // Or alternatively, img.save() to save over the existing one
 ```
 ### Exports
-`TYPE_LOSSY`
-`TYPE_LOSSLESS`
-`TYPE_EXTENDED`
+`TYPE_LOSSY`<br />
+`TYPE_LOSSLESS`<br />
+`TYPE_EXTENDED`<br />
 Constants for what type of image is loaded.
 
 `encodeResults`: enum of values that set[Image/Frame]Data returns.
@@ -51,7 +51,7 @@ The type of image from the TYPE_* constants table.
 A boolean flag for easily checking if the image is an animation.
 
 ##### `.frames` (read-only)
-Returns the array of frames, if any, or undefined.
+Returns the array of frames, if any, or undefined.<br />
 Note that while the frames themselves are read/write, you shouldn't modify them.
 
 ##### `.frameCount` (read-only)
@@ -72,7 +72,7 @@ A Buffer containing the raw XMP data stored in the image, or undefined if there 
 #### Image member functions
 
 ##### `async .initLib()`
-Initialize the internal library used for [get/set]ImageData and [get/set]FrameData described below.
+Initialize the internal library used for [get/set]ImageData and [get/set]FrameData described below.<br />
 There is no need to call this unless you plan to use one of those 4 functions.
 
 ##### `async .load(path)`
@@ -114,68 +114,68 @@ Save the image to `path`. Options are described below in the _Options for saving
 Save the image to a buffer and return it. Options are described below in the _Options for saving_ section.
 
 ##### `async .getImageData()`
-Get the raw RGBA pixel data for the image.
-Returns a Buffer in the format `[ r, g, b, a, r, g, b, a, ... ]`. Values are range 0 - 255.
-Use this for non-animations.
+Get the raw RGBA pixel data for the image.<br />
+Returns a Buffer in the format `[ r, g, b, a, r, g, b, a, ... ]`. Values are range 0 - 255.<br />
+Use this for non-animations.<br />
 On error, this returns a Buffer full of 0s.
 
 ##### `async .setImageData(buf, { width = 0, height = 0, quality = 75, exact = false, lossless = 0, method = 4 })`
-Encode `buf` as a new WebP using the provided settings and replace the image pixel data with it.
-This preserves EXIF/ICCP/XMP if present.
-Use this for non-animations.
+Encode `buf` as a new WebP using the provided settings and replace the image pixel data with it.<br />
+This preserves EXIF/ICCP/XMP if present.<br />
+Use this for non-animations.<br />
 Options:
-* `width`/`height`
-    If either are > 0, override the existing width and/or height with this value.
+* `width`/`height`<br />
+    If either are > 0, override the existing width and/or height with this value.<br />
     Use this if the pixel data in `buf` has different dimensions than the original image.
-* `quality`: What quality to set.
-    Range is 0 - 100.
+* `quality`: What quality to set.<br />
+    Range is 0 - 100.<br />
     Default is 75.
-* `exact`: Preserve data in transparent pixels.
+* `exact`: Preserve data in transparent pixels.<br />
     Defaults to `false`, which means transparent pixels may be modified to help with compression.
-* `lossless`: Save the data as a lossy/lossless image.
-    Range is 0 - 9.
-    Default is 0 (lossy).
+* `lossless`: Save the data as a lossy/lossless image.<br />
+    Range is 0 - 9.<br />
+    Default is 0 (lossy).<br />
     Higher values will result in smaller files, but requires more processing time.
-* `method`: Compression method to use.
-    Range is 0 - 6.
-    Default is 4.
+* `method`: Compression method to use.<br />
+    Range is 0 - 6.<br />
+    Default is 4.<br />
     Higher values will result in smaller files, but requires more processing time.
 
-If `lossless` is set above 0, then setting `quality` or `method` is discouraged as they will override settings in the lossless preset.
+If `lossless` is set above 0, then setting `quality` or `method` is discouraged as they will override settings in the lossless preset.<br />
 Return value can be checked against the values in encodeResults.
 
 ##### `async .getFrameData(frame)`
-Get the raw RGBA pixel data for a specific frame.
-Use this for animations.
+Get the raw RGBA pixel data for a specific frame.<br />
+Use this for animations.<br />
 Otherwise identical to `.getImageData()`.
 
 ##### `async .setFrameData(frame, buffer, { width = 0, height = 0, quality = 75, exact = false, lossless = 0, method = 4 })`
-Encode `buf` as a new WebP using the provided settings and replace an existing frame's pixel data with it.
-Use this for animations.
+Encode `buf` as a new WebP using the provided settings and replace an existing frame's pixel data with it.<br />
+Use this for animations.<br />
 Otherwise identical to `.setImageData()`.
 
 #### Static functions
 
 ##### `async Image.save(path, options)`
-Save the `options` to `path` using `Image.getEmptyImage()`.
-Works the same as `.save()` otherwise.
-Can be used to create an animation from scratch by passing `frames` in `options`.
+Save the `options` to `path` using `Image.getEmptyImage()`.<br />
+Works the same as `.save()` otherwise.<br />
+Can be used to create an animation from scratch by passing `frames` in `options`.<br />
 &ensp; Example: `Image.save('animation.webp', undefined, { frames: ... })`
 
 ##### `async Image.saveBuffer(options)`
-Save the `options` using `Image.getEmptyImage()` to a buffer and return it.
-Works the same as `.saveBuffer()` otherwise.
-Can be used to create an animation from scratch by passing `frames` in `options`.
+Save the `options` using `Image.getEmptyImage()` to a buffer and return it.<br />
+Works the same as `.saveBuffer()` otherwise.<br />
+Can be used to create an animation from scratch by passing `frames` in `options`.<br />
 &ensp; Example: `Image.saveBuffer(undefined, { frames: ... })`
 
 ##### `async Image.getEmptyImage(ext)`
-Returns a basic, lossy 1x1 black image with no alpha or metadata.
-Useful if you need to create a WebP from scratch, such as when converting from PNG.
-`.setImageData()` would be used to change the canvas size/contents.
+Returns a basic, lossy 1x1 black image with no alpha or metadata.<br />
+Useful if you need to create a WebP from scratch, such as when converting from PNG.<br />
+`.setImageData()` would be used to change the canvas size/contents.<br />
 Set `ext` to `true` to force the image to be an extended type, if desired. This is mainly for use internally.
 
 ##### `async Image.generateFrame({ path = undefined, buffer = undefined, img = undefined, x = undefined, y = undefined, duration = undefined, blend = undefined, dispose = undefined })`
-Generates enough of an `anmf` structure to be placed in `.frames`.
+Generates enough of an `anmf` structure to be placed in `.frames`.<br />
 Note that, at the moment, only *static* images are supported in this function.
 * `path`/`buffer`/`img`
     Only one of these can be present.
@@ -187,21 +187,21 @@ Note that, at the moment, only *static* images are supported in this function.
 
 ### Options for saving
 #### These options affect both static images and animations
-*   `exif`/`iccp`/`xmp`
-      Save or override EXIF/ICCP/XMP chunks.
-      Pass `true` to save the existing ones, or pass a Buffer to replace them.
+*   `exif`/`iccp`/`xmp`<br />
+      Save or override EXIF/ICCP/XMP chunks.<br />
+      Pass `true` to save the existing ones, or pass a Buffer to replace them.<br />
       Note that there is no verification whatsoever that the data passed is valid.
 
 ####  The options below are only used when saving an animation:
-*   `width`/`height`: Width/height of the image.
-      Range 0 - 16777216.
-      The product of width*height must NOT exceed (2 ** 32) - 1.
+*   `width`/`height`: Width/height of the image.<br />
+      Range 0 - 16777216.<br />
+      The product of width*height must NOT exceed (2 ** 32) - 1.<br />
       Passing 0 to either flags it for being set automatically.
-*   `bgColor`: The background color of the animation.
-      Format is [ r, g, b, a ].
+*   `bgColor`: The background color of the animation.<br />
+      Format is [ r, g, b, a ].<br />
       Defaults to [ 255, 255, 255, 255 ].
-*   `loops`: Number of times the animation loops.
-      Range is 0 - 65535, with 0 being an infinite loop.
+*   `loops`: Number of times the animation loops.<br />
+      Range is 0 - 65535, with 0 being an infinite loop.<br />
       Default is 0.
 *   `x`/`y`/`delay`/`blend`/`dispose`: Changes the default frame x/y position where a frame omits it (see below).
 * *   `x`/`y` defaults to 0.
@@ -209,31 +209,30 @@ Note that, at the moment, only *static* images are supported in this function.
 * *   `blend` defaults to `true`.
 * *   `dispose` defaults to `false`.
 * *   `frames`: An array of objects defining each frame of the animation with the following properties.
-* * *  `x`/`y`: x, y offset to place the frame within the animation.
-        Range 0 - 16777215.
+* * *  `x`/`y`: x, y offset to place the frame within the animation.<br />
+        Range 0 - 16777215.<br />
         Default is 0,0 (defined above).
-* * *  `delay`: Length of this frame in miliseconds.
-        Range 0 - 16777215.
-        Default is 100 (defined above).
+* * *  `delay`: Length of this frame in miliseconds.<br />
+        Range 0 - 16777215.<br />
+        Default is 100 (defined above).<br />
         According to the documentation, delays <= 10ms are WebP implementation defined, and many tools/browsers/etc assign their own minimum-allowed delay.
-* * *  `blend`
-        Boolean flag for whether or not to use alpha blending when drawing the frame.
+* * *  `blend`: Boolean flag for whether or not to use alpha blending when drawing the frame.<br />
         Default is `true` (defined above).
-* * *  `dispose`: Boolean flag to control frame disposal method.
-        `true` causes the background color to be drawn under the frame.
-        `false` draws the new frame directly.
+* * *  `dispose`: Boolean flag to control frame disposal method.<br />
+        `true` causes the background color to be drawn under the frame.<br />
+        `false` draws the new frame directly.<br />
         Default is `false` (defined above).
 
 ### Information about the internal library
 
-[get/set]ImageData and [get/set]FrameData are powered by Google's official libwebp library obtained from the [GitHub mirror](https://github.com/webmproject/libwebp).
-Commit 5651a6b was the latest at the time of compilation.
-This library was compiled with Emscripten with the command `emcc -O3 -s WASM=1 -s MODULARIZE -s EXTRA_EXPORTED_RUNTIME_METHODS='[cwrap]' -s ALLOW_MEMORY_GROWTH=1  -I libwebp binding.cpp libwebp/src/{dec,dsp,demux,enc,mux,utils}/*.c -o libwebp.js`.
+[get/set]ImageData and [get/set]FrameData are powered by Google's official libwebp library obtained from the [GitHub mirror](https://github.com/webmproject/libwebp).<br />
+Commit 5651a6b was the latest at the time of compilation.<br />
+This library was compiled with Emscripten with the command `emcc -O3 -s WASM=1 -s MODULARIZE -s EXTRA_EXPORTED_RUNTIME_METHODS='[cwrap]' -s ALLOW_MEMORY_GROWTH=1  -I libwebp binding.cpp libwebp/src/{dec,dsp,demux,enc,mux,utils}/*.c -o libwebp.js`.<br />
 binding.cpp is a shim I wrote to bridge the needed parts together and can be found in the libwebp/ directory.
 libwebp.mjs, found in the root, is the Javascript interface to it.
 
-At present, the only options for encoding are setting the lossless preset, quality, method, and exact flag.
-If access to other options is desired (see upstream libwebp/src/webp/encode.h, struct WebPConfig for settings), leave a feature request and I'll add it.
+At present, the only options for encoding are setting the lossless preset, quality, method, and exact flag.<br />
+If access to other options is desired (see upstream libwebp/src/webp/encode.h, struct WebPConfig for settings), leave a feature request and I'll add it.<br />
 The upstream command line tool `cwebp` can be used to play with the features and see what you find useful.
 
 ### Layout for internal Image data
@@ -300,11 +299,11 @@ The upstream command line tool `cwebp` can be used to play with the features and
 Image.muxAnim and .muxAnim were merged into Image.save and .save respectively.
 * Replace `Image.muxAnim({ path, frames, width, height, bgColor, loops, delay, x, y, blend, dispose, exif, iccp, xmp })`
 * With `Image.save(path, undefined, { frames, width, height, bgColor, loops, delay, x, y, blend, dispose, exif, iccp, xmp })`
-.
+<br /><br />
 * Replace `.muxAnim({ path, width, height, bgColor, loops, delay, x, y, blend, dispose, exif, iccp, xmp })`
 * With `.save(path, { width, height, bgColor, loops, delay, x, y, blend, dispose, exif, iccp, xmp })`
 
-`.anim.backgroundColor` renamed to `.anim.bgColor` for brevity and consisteny.
-`.anim.loopCount` renamed to `.anim.loop` for consistency.
-`.anim.frameCount` and `.frameCount` were removed. Should use `.anim.frames.length` and `.frames.length` respectively instead.
+`.anim.backgroundColor` renamed to `.anim.bgColor` for brevity and consisteny.<br />
+`.anim.loopCount` renamed to `.anim.loop` for consistency.<br />
+`.anim.frameCount` and `.frameCount` were removed. Should use `.anim.frames.length` and `.frames.length` respectively instead.<br />
 `.demuxAnim()` was renamed to `.demux()`
