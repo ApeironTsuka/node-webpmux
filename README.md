@@ -168,17 +168,20 @@ Works the same as `.saveBuffer()` otherwise.
 Can be used to create an animation from scratch by passing `frames` in `options`.
 &ensp; Example: `Image.saveBuffer(undefined, { frames: ... })`
 
-##### `async Image.getEmptyImage()`
+##### `async Image.getEmptyImage(ext)`
 Returns a basic, lossy 1x1 black image with no alpha or metadata.
 Useful if you need to create a WebP from scratch, such as when converting from PNG.
 `.setImageData()` would be used to change the canvas size/contents.
+Set `ext` to `true` to force the image to be an extended type, if desired. This is mainly for use internally.
 
-##### `async Image.generateFrame({ path = undefined, buffer = undefined, x = undefined, y = undefined, duration = undefined, blend = undefined, dispose = undefined })`
+##### `async Image.generateFrame({ path = undefined, buffer = undefined, img = undefined, x = undefined, y = undefined, duration = undefined, blend = undefined, dispose = undefined })`
 Generates enough of an `anmf` structure to be placed in `.frames`.
 Note that, at the moment, only *static* images are supported in this function.
-* `path`/`buffer`
+* `path`/`buffer`/`img`
     Only one of these can be present.
-    `path` will load image data from file, while `buffer` will load from the buffer.
+    `path` will load image data from file.
+    `buffer` will load from the buffer.
+    `img` will use an existing Image instance.
 * `x`/`y`/`duration`/`blend`/`dispose`
     Explicitly set these properties. See the _Options for saving_ section for what these do.
 

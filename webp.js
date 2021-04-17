@@ -635,6 +635,7 @@ class Image {
   async replaceFrame(frame, path) { return this.#replaceFrame(frame, path); }
   async replaceFrameBuffer(frame, buffer) { return this.#replaceFrame(frame, undefined, buffer); }
   async save(path = this.path, { width = this.width, height = this.height, frames = this.frames, bgColor = this.hasAnim ? this.anim.bgColor : [ 255, 255, 255, 255 ], loops = this.hasAnim ? this.anim.loops : 0, delay = 100, x = 0, y = 0, blend = true, dispose = false, exif = !!this.exif, iccp = !!this.iccp, xmp = !!this.xmp } = {}) {
+    if (!path) { throw new Error('Cannot save to disk without a path'); }
     let writer = new WebPWriter();
     writer.writeFile(path);
     return this.#save(writer, { width, height, frames, bgColor, loops, delay, x, y, blend, dispose, exif, iccp, xmp });
@@ -751,15 +752,18 @@ class Image {
     if (ext) { img.exif = undefined; }
     return img;
   }
-  static async generateFrame({ path = undefined, buffer = undefined, x = undefined, y = undefined, duration = undefined, blend = undefined, dispose = undefined } = {}) {
-    if (((!path) && (!buffer)) ||
-        ((path) && (buffer))) { throw new Error('Must provide either `path` or `buffer`'); }
-    let img = new Image();
-    if (path) { await img.load(path); }
-    else { await img.loadBuffer(buffer); }
-    if (img.hasAnim) { throw new Error('Merging animations is not currently supported'); }
+  static async generateFrame({ path = undefined, buffer = undefined, img = undefined, x = undefined, y = undefined, duration = undefined, blend = undefined, dispose = undefined } = {}) {
+    let _img = img;
+    if (((!path) && (!buffer) && (!img)) ||
+        ((path) && (buffer) && (img))) { throw new Error('Must provide either `path`, `buffer`, or `img`'); }
+    if (!img) {
+      _img = new Image();
+      if (path) { await _img.load(path); }
+      else { await _img.loadBuffer(buffer); }
+    }
+    if (_img.hasAnim) { throw new Error('Merging animations is not currently supported'); }
     return {
-      img,
+      img: _img,
       x,
       y,
       duration,
