@@ -25,23 +25,23 @@ await img.saveBuffer();
 // Or overwrite the original on disk
 await img.save();
 
-// Get a Buffer of size img.width * img.height * 4 containing the image's pixel data
-buffer = await img.getImageData();
+// Get a Buffer of size img.width * img.height * 4 containing the image's pixel data in RGBA order
+pixels = await img.getImageData();
 
 // Set the image's pixel data, lossless preset 9, while perfectly preserving alpha pixels
-await img.setImageData(buffer, { lossless: 9, exact: true });
+await img.setImageData(pixels, { lossless: 9, exact: true });
 // These two are useful for modifying images, or converting to/from other formats
 // An example of this, using PNGjs's sync API for brevity
 png = PNG.sync.read(fs.readFileSync('example.png'));
 await img.setImageData(png.data, { width: png.width, height: png.height });
 // ^ from PNG, or to PNG v
-buffer = await img.getImageData();
-fs.writeFileSync('example.png', PNG.sync.write({ data: buffer, width: img.width, height: img.height }, { deflateLevel: 9 }));
+pixels = await img.getImageData();
+fs.writeFileSync('example.png', PNG.sync.write({ data: pixels, width: img.width, height: img.height }, { deflateLevel: 9 }));
 
 // For animations..
-buffer = await img.getFrameData(5);
+pixels = await img.getFrameData(5);
 frame = img.frames[5]; // in case you need frame.width and frame.height, as you would for converting to/from other formats
-await img.setFrameData(5, buffer, { lossless: 9, exact: true });
+await img.setFrameData(5, pixels, { lossless: 9, exact: true });
 
 // Replacing a frame from disk
 await img.replaceFrame(4, 'different frame.webp');
@@ -51,10 +51,10 @@ await img.replaceFrameBuffer(4, buffer);
 
 // Or, you can generate a new frame completely from scratch
 width = 20; height = 50;
-buffer = Buffer.alloc(width * height * 4);
-/* ... populate `buffer` ... omitting it here ... */
+pixels = Buffer.alloc(width * height * 4);
+/* ... populate `pixels` ... omitting it here ... */
 img = await WebP.Image.getEmptyImage();
-await img.setImageData(buffer, { width, height });
+await img.setImageData(pixels, { width, height });
 
 // To add the new frame
 frame = await WebP.Image.generateFrame({ img });
