@@ -408,6 +408,7 @@ class Image {
   get height() { let d = this.data; return !this.loaded ? undefined : d.extended ? d.extended.height : d.vp8l ? d.vp8l.height : d.vp8 ? d.vp8.height : undefined; }
   get type() { return this.loaded ? this.data.type : undefined; }
   get hasAnim() { return this.loaded ? this.data.extended ? this.data.extended.hasAnim : false : false; }
+  get hasAlpha() { return this.loaded ? this.data.extended ? this.data.extended.hasAlpha : this.data.vp8 ? this.data.vp8.alpha : this.data.vp8l ? this.data.vp8l.alpha : false : false; }
   get anim() { return this.hasAnim ? this.data.anim : undefined; }
   get frames() { return this.anim ? this.anim.frames : undefined; }
   get iccp() { return this.data.extended ? this.data.extended.hasICCP ? this.data.iccp.raw : undefined : undefined; }

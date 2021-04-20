@@ -50,6 +50,9 @@ The type of image from the TYPE_* constants table.
 ##### `.hasAnim` (read-only)
 A boolean flag for easily checking if the image is an animation.
 
+##### `.hasAlpha` (read-only)
+A boolean flag for easily checking if the image has transparency in any way.
+
 ##### `.frames` (read-only)
 Returns the array of frames, if any, or undefined.<br />
 Note that while the frames themselves are read/write, you shouldn't modify them.
