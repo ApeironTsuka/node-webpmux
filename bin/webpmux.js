@@ -214,7 +214,7 @@ function printInfo(img) {
 async function main() {
   let state = parseCmdLine(process.argv.slice(2)), img = new WebP.Image(), d;
   if (state.help) { printHelp(); }
-  else if (state.version) { console.log(`node-webpmux ${JSON.parse(fs.readFileSync('../package.json')).version}`); }
+  else if (state.version) { console.log(`node-webpmux ${JSON.parse(fs.readFileSync(`${__dirname}/../package.json`)).version}`); }
   else if (state.get) {
     if (!state.in) { console.log('Missing input file'); return; }
     if (!state.out) { console.log('Missing output file'); return; }
