@@ -199,7 +199,7 @@ function printInfo(img) {
     for (let i = 0, fr = img.frames, l = fr.length; i < l; i++) {
       let out = '';
       out += `${pad(i+1, 3)}: ${pad(fr[i].width, 5)} ${pad(fr[i].height, 5)}   ${fra(fr[i]) ? 'yes' : ' no'} `;
-      out += `${pad(fr[i].x, 8)} ${pad(fr[i].y, 8)} ${pad(fr[i].duration, 8)} ${pad(fr[i].dispose ? 'background' : 'none', 10)} `;
+      out += `${pad(fr[i].x, 8)} ${pad(fr[i].y, 8)} ${pad(fr[i].delay, 8)} ${pad(fr[i].dispose ? 'background' : 'none', 10)} `;
       out += `${pad(fr[i].blend ? 'yes' : 'no', 5)} ${pad(fr[i].alph ? fr[i].raw.length+14 : fr[i].raw.length-4, 10)} `;
       out += `${pad(fr[i].vp8 ? 'lossy' : 'lossless', 11)}`;
       console.log(out);
@@ -273,7 +273,7 @@ async function main() {
       if (dur.end == 0) { dur.end = img.frames.length-1; }
       if (dur.end >= img.frames.length) { console.log('Warning: End frame beyond frame count; clipping'); dur.end = img.frames.length-1; }
       if (dur.start >= img.frames.length) { console.log('Warning: Start frame beyond frame count; clipping'); dur.start = img.frames.length-1; }
-      for (let x = dur.start, xl = dur.end; x <= xl; x++) { img.frames[x].duration = dur.dur; }
+      for (let x = dur.start, xl = dur.end; x <= xl; x++) { img.frames[x].delay = dur.dur; }
     }
     try { await img.save(state.out); }
     catch (e) { console.log(e); }
@@ -290,7 +290,7 @@ async function main() {
         path: f[i].path,
         x: d.x,
         y: d.y,
-        duration: d.duration,
+        delay: d.duration,
         dispose: d.dispose,
         blend: d.blend
       });

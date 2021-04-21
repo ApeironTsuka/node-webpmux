@@ -129,7 +129,7 @@ class WebPReader {
       y: buf.readUIntLE(3, 3),
       width: buf.readUIntLE(6, 3) + 1,
       height: buf.readUIntLE(9, 3) + 1,
-      duration: buf.readUIntLE(12, 3),
+      delay: buf.readUIntLE(12, 3),
       blend: !(buf[15] & 0b00000010),
       dispose: !!(buf[15] & 0b00000001)
     }, keepLooping = true, anmfReader = new WebPReader();
@@ -753,7 +753,7 @@ class Image {
     if (ext) { img.exif = undefined; }
     return img;
   }
-  static async generateFrame({ path = undefined, buffer = undefined, img = undefined, x = undefined, y = undefined, duration = undefined, blend = undefined, dispose = undefined } = {}) {
+  static async generateFrame({ path = undefined, buffer = undefined, img = undefined, x = undefined, y = undefined, delay = undefined, blend = undefined, dispose = undefined } = {}) {
     let _img = img;
     if (((!path) && (!buffer) && (!img)) ||
         ((path) && (buffer) && (img))) { throw new Error('Must provide either `path`, `buffer`, or `img`'); }
@@ -767,7 +767,7 @@ class Image {
       img: _img,
       x,
       y,
-      duration,
+      delay,
       blend,
       dispose
     };

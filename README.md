@@ -177,7 +177,7 @@ Useful if you need to create a WebP from scratch, such as when converting from P
 `.setImageData()` would be used to change the canvas size/contents.<br />
 Set `ext` to `true` to force the image to be an extended type, if desired. This is mainly for use internally.
 
-##### `async Image.generateFrame({ path = undefined, buffer = undefined, img = undefined, x = undefined, y = undefined, duration = undefined, blend = undefined, dispose = undefined })`
+##### `async Image.generateFrame({ path = undefined, buffer = undefined, img = undefined, x = undefined, y = undefined, delay = undefined, blend = undefined, dispose = undefined })`
 Generates enough of an `anmf` structure to be placed in `.frames`.<br />
 Note that, at the moment, only *static* images are supported in this function.
 * `path`/`buffer`/`img`
@@ -185,7 +185,7 @@ Note that, at the moment, only *static* images are supported in this function.
     `path` will load image data from file.
     `buffer` will load from the buffer.
     `img` will use an existing Image instance.
-* `x`/`y`/`duration`/`blend`/`dispose`
+* `x`/`y`/`delay`/`blend`/`dispose`
     Explicitly set these properties. See the _Options for saving_ section for what these do.
 
 ### Options for saving
@@ -273,7 +273,7 @@ The upstream command line tool `cwebp` can be used to play with the features and
           type, // The type of image this frame is, from the constants table.
           x, y, // The frame's x, y position.
           width, height, // The frame's width and height.
-          duration, // The duration of the frame.
+          delay, // The duration of the frame.
           blend, dispose, // The frame's blend/dispose flags.
           // Additionally, one or more of the following.
           vp8, // The raw, compressed WebP data for a lossy image. If present, there will be no `vp8l`.
@@ -310,3 +310,6 @@ Image.muxAnim and .muxAnim were merged into Image.save and .save respectively.
 `.anim.loopCount` renamed to `.anim.loop` for consistency.<br />
 `.anim.frameCount` and `.frameCount` were removed. Should use `.anim.frames.length` and `.frames.length` respectively instead.<br />
 `.demuxAnim()` was renamed to `.demux()`
+
+## Breaking changes from 2.0.0 to 2.0.1
+Image.generateFrame()'s `duration` input renamed to `delay`<br />
