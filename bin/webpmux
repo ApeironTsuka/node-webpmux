@@ -113,10 +113,11 @@ function printHelp() {
 
 GET_OPTS:
   Extract the relevant data:
-    iccp (or icc, for backwards support)
-    exif
-    xmp
-    frame n
+    iccp        get ICC profile
+    icc         get ICC profile (backwards support)
+    exif        get EXIF metadata
+    xmp         get XMP metadata
+    frame n     get nth frame (first frame is frame 1)
 
 SET_OPTS:
   Set color profile/metadata:
@@ -222,7 +223,7 @@ async function main() {
       case 'iccp': d = img.iccp; break;
       case 'exif': d = img.exif; break;
       case 'xmp': d = img.xmp; break;
-      case 'frame': d = (await img.demuxToBuffers({ frame: d.frame }))[0]; break;
+      case 'frame': d = (await img.demuxToBuffers({ frame: d.frame-1 }))[0]; break;
     }
     fs.writeFileSync(state.out, d);
   }
