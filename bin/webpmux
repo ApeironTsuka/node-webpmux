@@ -29,63 +29,60 @@ function parseFrame(f) {
 }
 function parseCmdLine(args) {
   let state = {}, tester = /^-/;
-  let test = (i, t, v) => {
-    if ((t) && (i >= args.length)) { return false; }
-    else if (tester.test(args[i])) {
-      if (t) { return false; }
-      throw new Error(`Expected argument, got flag at word ${i} (${args[i-1]} ${args[i]} ${args[i+1]})`);
-    }
-    if (t) { return (v && v == args[i] ? true : v ? false : true); }
-    else { return true; }
+  let test = (_i) => {
+    let i = _i+1;
+    if (i >= args.length) { return false; }
+    else if (tester.test(args[i])) { return false; }
+    return true;
   };
   for (let i = 0, l = args.length; i < l; i++) {
     switch (args[i]) {
       case '-get':
-        if (!test(i+1, true)) { throw new Error('GET_OPTS missing argument'); }
+        if (!test(i)) { throw new Error('GET_OPTS missing argument'); }
         state.get = { what: args[++i] };
         switch (state.get.what) {
           case 'icc': case 'iccp': state.get.what = 'iccp'; break;
           case 'exif': case 'xmp': break;
           case 'frame':
-            if (!test(i+1, true)) { throw new Error('GET_OPTS frame missing argument'); }
+            if (!test(i)) { throw new Error('GET_OPTS frame missing argument'); }
             state.get.frame = args[++i];
             break;
           default: throw new Error(`Unknown GET_OPTS ${state.set.what}`);
         }
         break;
       case '-set':
-        if (!test(i+1, true)) { throw new Error('SET_OPTS missing argument'); }
+        if (!test(i)) { throw new Error('SET_OPTS missing argument'); }
         state.set = { what: args[++i] };
         switch (state.set.what) {
-          case 'loop': if (!test(i+1, true)) { throw new Error('SET_OPTS loop missing argument'); } state.set.loop = args[++i]; break;
-          case 'iccp': case 'icc': if (!test(i+1, true)) { throw new Error(`SET_OPTS ${state.set.what} missing argument`); } state.set.what = 'iccp'; state.set.iccp = args[++i]; break;
-          case 'exif': if (!test(i+1, true)) { throw new Error('SET_OPTS exif missing argument'); } state.set.exif = args[++i]; break;
-          case 'xmp': if (!test(i+1, true)) { throw new Error('SET_OPTS xmp missing argument'); } state.set.xmp = args[++i]; break;
+          case 'loop': if (!test(i)) { throw new Error('SET_OPTS loop missing argument'); } state.set.loop = args[++i]; break;
+          case 'iccp': case 'icc': if (!test(i)) { throw new Error(`SET_OPTS ${state.set.what} missing argument`); } state.set.what = 'iccp'; state.set.iccp = args[++i]; break;
+          case 'exif': if (!test(i)) { throw new Error('SET_OPTS exif missing argument'); } state.set.exif = args[++i]; break;
+          case 'xmp': if (!test(i)) { throw new Error('SET_OPTS xmp missing argument'); } state.set.xmp = args[++i]; break;
           default: throw new Error(`Unknown SET_OPTS ${state.set.what}`);
         }
         break;
-      case '-strip': if (!test(i+1, true)) { throw new Error('STRIP_OPTS missing argument'); } state.strip = args[++i]; break;
-      case '-duration': if (!test(i+1, true)) { throw new Error('DUR_OPTS missing argument'); } if (!state.duration) { state.duration = []; } state.duration.push(parseDuration(args[++i])); break;
+      case '-strip': if (!test(i)) { throw new Error('STRIP_OPTS missing argument'); } state.strip = args[++i]; break;
+      case '-duration': if (!test(i)) { throw new Error('DUR_OPTS missing argument'); } if (!state.duration) { state.duration = []; } state.duration.push(parseDuration(args[++i])); break;
       case '-frame':
         {
           let f = {};
-          if (!test(i+1, true)) { throw new Error('FRAME_OPTS missing argument'); }
+          if (!test(i)) { throw new Error('FRAME_OPTS missing argument'); }
           if (!state.frames) { state.frames = []; }
           f.path = args[++i];
-          if (!test(i+1, true)) { throw new Error('Missing arguments in -frame'); }
+          if (!/\.webp$/i.test(f.path)) { throw new Error('First argument to -frame must be a webp image'); }
+          if (!test(i)) { throw new Error('Missing arguments in -frame'); }
           if (args[i+1][0] == '+') { f.bin = parseFrame(args[++i]); }
           else {
             let ni;
             for (let x = i+1, xl = l; x < xl; x++) {
               switch (args[x]) {
-                case 'duration': if (!test(i+1, true)) { throw new Error('FRAME_OPTS duration missing argument'); } f.duration = args[++x]; break;
-                case 'x': if (!test(i+1, true)) { throw new Error('FRAME_OPTS x missing argument'); } f.x = args[++x]; break;
-                case 'y': if (!test(i+1, true)) { throw new Error('FRAME_OPTS y missing argument'); } f.y = args[++x]; break;
-                case 'dispose': if (!test(i+1, true)) { throw new Error('FRAME_OPTS dispose missing argument'); } f.dispose = args[++x]; break;
-                case 'blend': if (!test(i+1, true)) { throw new Error('FRAME_OPTS blend missing argument'); } f.blend = args[++x]; break;
-                default: break;
+                case 'duration': if (!test(x)) { throw new Error('FRAME_OPTS duration missing argument'); } f.duration = args[++x]; break;
+                case 'x': if (!test(x)) { throw new Error('FRAME_OPTS x missing argument'); } f.x = args[++x]; break;
+                case 'y': if (!test(x)) { throw new Error('FRAME_OPTS y missing argument'); } f.y = args[++x]; break;
+                case 'dispose': if (!test(x)) { throw new Error('FRAME_OPTS dispose missing argument'); } f.dispose = args[++x]; break;
+                case 'blend': if (!test(x)) { throw new Error('FRAME_OPTS blend missing argument'); } f.blend = args[++x]; break;
+                default: ni = x-1; xl = x; break;
               }
-              ni = x-1;
             }
             i = ni;
           }
@@ -95,9 +92,9 @@ function parseCmdLine(args) {
       case '-info': state.info = true; break;
       case '-h': case '-help': state.help = true; break;
       case '-version': state.version = true; break;
-      case '-o': if (!test(i+1, true)) { throw new Error('OUT missing argument'); } state.out = args[++i]; break;
-      case '-loop': if (!test(i+1, true)) { throw new Error('COUNT missing argument'); } state.loop = args[++i]; break;
-      case '-bg': if (!test(i+1, true)) { throw new Error('COLOR missing argument'); } state.bg = args[++i].split(','); break;
+      case '-o': if (!test(i)) { throw new Error('OUT missing argument'); } state.out = args[++i]; break;
+      case '-loop': if (!test(i)) { throw new Error('COUNT missing argument'); } state.loop = args[++i]; break;
+      case '-bg': if (!test(i)) { throw new Error('COLOR missing argument'); } state.bg = args[++i].split(','); break;
       default: if (!state.in) { state.in = args[i]; } else { throw new Error(`Unknown flag ${args[i]}`); }
     }
   }
