@@ -38,6 +38,20 @@ const encodeResults = {
   VP8_ENC_ERROR_USER_ABORT: 10,              // abort request by user
   VP8_ENC_ERROR_LAST: 11                     // list terminator. always last.
 };
+const imageHints = {
+  DEFAULT: 0,
+  PICTURE: 1, // digital picture, such as a portrait. Indoors shot
+  PHOTO: 2, // outdoor photograph with natural lighting
+  GRAPH: 3 // discrete tone image (graph, map-tile, etc)
+};
+const imagePresets = {
+  DEFAULT: 0,
+  PICTURE: 1, // digital picture, such as a portrait. Indoors shot
+  PHOTO: 2, // outdoor photograph with natural lighting
+  DRAWING: 3, // hand or line drawing, with high-contrast details
+  ICON: 4, // small-sized, colorful images
+  TEXT: 5 // text-like
+};
 const intfTypes = {
   NONE: 0,
   FILE: 1,
@@ -652,13 +666,13 @@ class Image {
     let buf = await this.saveBuffer(), { libwebp } = this;
     return libwebp.decodeImage(buf, this.width, this.height);
   }
-  async setImageData(buf, { width = 0, height = 0, quality = undefined, exact = undefined, lossless = undefined, method = undefined } = {}) {
+  async setImageData(buf, { width = 0, height = 0, preset = undefined, quality = undefined, exact = undefined, lossless = undefined, method = undefined, advanced = undefined } = {}) {
     if (!this.libwebp) { throw new Error('Must call .initLib() before using setImageData'); }
     if (this.hasAnim) { throw new Error('Calling setImageData on animations is not supported'); }
     if ((quality !== undefined) && ((quality < 0) || (quality > 100))) { throw new Error('Quality out of range'); }
     if ((lossless !== undefined) && ((lossless < 0) || (lossless > 9))) { throw new Error('Lossless preset out of range'); }
     if ((method !== undefined) && ((method < 0) || (method > 6))) { throw new Error('Method out of range'); }
-    let { libwebp } = this, ret = libwebp.encodeImage(buf, width > 0 ? width : this.width, height > 0 ? height : this.height, { quality, exact, lossless, method }), img = new Image(), keepEx = false, ex;
+    let { libwebp } = this, ret = libwebp.encodeImage(buf, width > 0 ? width : this.width, height > 0 ? height : this.height, { preset, quality, exact, lossless, method, advanced }), img = new Image(), keepEx = false, ex;
     if (ret.res !== encodeResults.SUCCESS) { return ret.res; }
     await img.loadBuffer(Buffer.from(ret.buf));
     switch (this.type) {
@@ -702,14 +716,14 @@ class Image {
     let fr = this.frames[frame], buf = await this.#demuxFrameBuffer(fr), { libwebp } = this;
     return libwebp.decodeImage(buf, fr.width, fr.height);
   }
-  async setFrameData(frame, buf, { width = 0, height = 0, quality = undefined, exact = undefined, lossless = undefined, method = undefined } = {}) {
+  async setFrameData(frame, buf, { width = 0, height = 0, preset = undefined, quality = undefined, exact = undefined, lossless = undefined, method = undefined, advanced = undefined } = {}) {
     if (!this.libwebp) { throw new Error('Must call .initLib() before using setFrameData'); }
     if (!this.hasAnim) { throw new Error('Calling setFrameData on non-animations is not supported'); }
     if ((frame < 0) || (frame >= this.frames.length)) { throw new Error('Frame index out of range'); }
     if ((quality !== undefined) && ((quality < 0) || (quality > 100))) { throw new Error('Quality out of range'); }
     if ((lossless !== undefined) && ((lossless < 0) || (lossless > 9))) { throw new Error('Lossless preset out of range'); }
     if ((method !== undefined) && ((method < 0) || (method > 6))) { throw new Error('Method out of range'); }
-    let fr = this.frames[frame], { libwebp } = this, ret = libwebp.encodeImage(buf, width > 0 ? width : fr.width, height > 0 ? height : fr.height, { quality, exact, lossless, method }), img = new Image();
+    let fr = this.frames[frame], { libwebp } = this, ret = libwebp.encodeImage(buf, width > 0 ? width : fr.width, height > 0 ? height : fr.height, { preset, quality, exact, lossless, method, advanced }), img = new Image();
     if (ret.res !== encodeResults.SUCCESS) { return ret.res; }
     await img.loadBuffer(Buffer.from(ret.buf));
     switch (fr.type) {
@@ -778,6 +792,8 @@ module.exports = {
   TYPE_LOSSLESS: constants.TYPE_LOSSLESS,
   TYPE_EXTENDED: constants.TYPE_EXTENDED,
   encodeResults,
+  hints: imageHints,
+  presets: imagePresets,
   Image
 };
 

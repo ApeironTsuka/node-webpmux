@@ -122,7 +122,7 @@ Returns a Buffer in the format `[ r, g, b, a, r, g, b, a, ... ]`. Values are ran
 Use this for non-animations.<br />
 On error, this returns a Buffer full of 0s.
 
-##### `async .setImageData(buf, { width = 0, height = 0, quality = 75, exact = false, lossless = 0, method = 4 })`
+##### `async .setImageData(buf, { width = 0, height = 0, preset = 0, quality = 75, exact = false, lossless = 0, method = 4, advanced = undefined })`
 Encode `buf` as a new WebP using the provided settings and replace the image pixel data with it.<br />
 This preserves EXIF/ICCP/XMP if present.<br />
 Use this for non-animations.<br />
@@ -130,6 +130,10 @@ Options:
 * `width`/`height`<br />
     If either are > 0, override the existing width and/or height with this value.<br />
     Use this if the pixel data in `buf` has different dimensions than the original image.
+* `preset`: What image preset to use, if any.<br />
+    Range is 0 - 5<br />
+    Default is 0 (DEFAULT).<br />
+    An enum of constants can be found under WebP.presets
 * `quality`: What quality to set.<br />
     Range is 0 - 100.<br />
     Default is 75.
@@ -143,6 +147,94 @@ Options:
     Range is 0 - 6.<br />
     Default is 4.<br />
     Higher values will result in smaller files, but requires more processing time.
+* `advanced`: Access to more advanced encoding settings offered by libwebp<br />
+* * `imageHint`: Hint for what type of image it is (only used for lossless encoding for now, according to libwebp spec).<br />
+      Range is 0 - 3.<br />
+      Default is 0 (DEFAULT).<br />
+      An enum of constants can be found under WebP.hints
+* * `targetSize`: Specifies the desired target size in bytes.<br />
+      Default is 0 (no target).<br />
+      Takes precedence over the `method` parameter.
+* * `targetPSNR`: Specifies the minimum distortion to try to achieve.<br />
+      Default is 0 (no target).<br />
+      Takes precedence over the `targetSize` parameter.
+* * `segments`: Maximum number of segments to use.<br />
+      Range is 1 - 4.<br />
+      Default is 4.
+* * `snsStrength`: Spacial Noise Shaping.<br />
+      Range is 0 - 100.<br />
+      Default is 50.
+* * `filterStrength`<br />
+      Range is 0 - 100.<br />
+      Default is 0 (off).
+* * `filterSharpness`<br />
+      Range is 0 - 7, with 7 being the least sharp.<br />
+      Default is 0 (off).
+* * `filterType`<br />
+      Range is 0 - 1.<br />
+      Default is 1.<br />
+      0 is simple; 1 is strong.<br />
+      Only used if `filterStrength` > 0 or `autoFilter` > 0.
+* * `autoFilter`: Auto-adjust the filter's strength.<br />
+      Range is 0 - 1.<br />
+      Default is 0 (off).
+* * `alphaCompression`: Algorithm for encoding the alpha plane.<br />
+      Range is 0 - 1.<br />
+      Default is 1 (Lossless).<br />
+      0 is off; 1 is lossless.
+* * `alphaFiltering`: Predictive filtering method for alpha place.<br />
+      Range is 0 - 2.<br />
+      Default is 1 (Fast).<br />
+      0 is none; 1 is fast; 2 is best
+* * `alphaQuality`<br />
+      Range is 0 - 100.<br />
+      Default is 100.
+* * `pass`: Number of entropy-analysis passes.<br />
+      Range is 1 - 10.<br />
+      Default is 1.
+* * `showCompressed`: Export the compressed picture back.<br />
+      Range is 0 - 1.<br />
+      Default is 0 (don't).<br />
+      In-loop filtering is not applied.
+* * `preprocessing`: Preprocessing filter.<br />
+      Range is 0 - 2.<br />
+      Default is 0 (None).<br />
+      0 is none; 1 is segment-smooth; 2 is pseudo-random dithering.
+* * `partitions`: log2(number of token partitions).<br />
+      Range is 0 - 3.<br />
+      Default is 0.<br />
+      Higher values result in harder progressive decoding.
+* * `partitionLimit`: Quality degredation allowed to fit the 512k limit on prediction modes coding.<br />
+      Range is 0 - 100.<br />
+      Default is 0.
+* * `emulateJpegSize`: Compression parameters are remapped to better mat the expected output size from JPEG compression.<br />
+      Range is 0 - 1.<br />
+      Default is 0 (Off).<br />
+      Generally, the output size will be smaller but the degredation will be lower.
+* * `threadLevel`: Try to use multi-threaded encoding.<br />
+      Default is 0 (Off).<br />
+      NOTE: Currently the WebAssembly is NOT compiled with support for threads, so this option does nothing.<br />
+      NodeJS doesn't support threads in WebAssembly without an experimental flag, and my testing with it didn't appear to use threads regardless.
+* * `lowMemory`: Reduce memory usage but increase CPU use.<br />
+      Range is 0 - 1.<br />
+      Default is 0 (Off).
+* * `nearLossless`: Near lossless encoding.<br />
+      Range is 0 - 100.<br />
+      Default is 100 (off).<br />
+      0 is max loss, 100 is off.
+* * `useDeltaPalette`: Reserved for future lossless feature.<br />
+      Range is 0 - 0.<br />
+      Default is 0 (Off).<br />
+      Setting this will do nothing, as it's forced back to 0.
+* * `useSharpYUV`: Use sharp (and slow) RGB->YUV conversion.<br />
+      Range is 0 - 1.<br />
+      Default is 0 (Off).
+* * `qMin`: Minimum permissible quality factor.<br />
+      Range is 0 - 100.<br />
+      Default is 0.
+* * `qMax`: Maximum permissible quality factor.<br />
+      Range is 0 - 100.<br />
+      Default is 100.
 
 If `lossless` is set above 0, then setting `quality` or `method` is discouraged as they will override settings in the lossless preset.<br />
 Return value can be checked against the values in encodeResults.
@@ -152,7 +244,7 @@ Get the raw RGBA pixel data for a specific frame.<br />
 Use this for animations.<br />
 Otherwise identical to `.getImageData()`.
 
-##### `async .setFrameData(frame, buffer, { width = 0, height = 0, quality = 75, exact = false, lossless = 0, method = 4 })`
+##### `async .setFrameData(frame, buffer, { width = 0, height = 0, preset = 0, quality = 75, exact = false, lossless = 0, method = 4, advanced = undefined })`
 Encode `buf` as a new WebP using the provided settings and replace an existing frame's pixel data with it.<br />
 Use this for animations.<br />
 Otherwise identical to `.setImageData()`.
@@ -229,8 +321,8 @@ Note that, at the moment, only *static* images are supported in this function.
 ### Information about the internal library
 
 [get/set]ImageData and [get/set]FrameData are powered by Google's official libwebp library obtained from the [GitHub mirror](https://github.com/webmproject/libwebp).<br />
-Commit 5651a6b was the latest at the time of compilation.<br />
-This library was compiled with Emscripten with the command `emcc -O3 -s WASM=1 -s MODULARIZE -s EXTRA_EXPORTED_RUNTIME_METHODS='[cwrap]' -s ALLOW_MEMORY_GROWTH=1  -I libwebp binding.cpp libwebp/src/{dec,dsp,demux,enc,mux,utils}/*.c -o libwebp.js`.<br />
+Commit 05b72d42 was the latest at the time of compilation.<br />
+This library was compiled with Emscripten with the command `emcc -O3 -s WASM=1 -s MODULARIZE -s EXTRA_EXPORTED_RUNTIME_METHODS='[cwrap]' -s ALLOW_MEMORY_GROWTH=1  -I libwebp binding.cpp libwebp/src/{dec,dsp,demux,enc,mux,utils}/*.c --bind -o libwebp.js`.<br />
 binding.cpp is a shim I wrote to bridge the needed parts together and can be found in the libwebp/ directory.
 libwebp.mjs, found in the root, is the Javascript interface to it.
 

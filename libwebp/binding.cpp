@@ -1,8 +1,11 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include "emscripten.h"
+#include <emscripten.h>
+#include <emscripten/bind.h>
 #include "libwebp/src/webp/encode.h"
 #include "libwebp/src/webp/decode.h"
+
+using namespace emscripten;
 
 class WebPEnc {
   public:
@@ -25,15 +28,22 @@ class WebPEnc {
       this->ready = false;
       this->picAlloc = false;
     }
-    bool loadRGBA(const uint8_t *input, int width, int height) {
+    // Clunky workaround for Embind not supporting pointers to primitives (first argument should be a const uint8_t *)
+    bool loadRGBA(const int input, int width, int height) {
       if (!this->ready) { return false; }
       this->pic.width = width;
       this->pic.height = height;
-      WebPPictureImportRGBA(&(this->pic), input, width * 4);
+      WebPPictureImportRGBA(&(this->pic), reinterpret_cast<const uint8_t *>(input), width * 4);
       this->picAlloc = true;
       return true;
     }
-    bool setLossless(int en) {
+    bool setPreset(int en) {
+      if (!this->ready) { return false; }
+      if (en > 0) { WebPConfigPreset(&(this->config), (WebPPreset)en, 100.0f); }
+      else { WebPConfigInit(&(this->config)); }
+      return true;
+    }
+    bool setLosslessPreset(int en) {
       if (!this->ready) { return false; }
       if (en > 0) { WebPConfigLosslessPreset(&(this->config), en); this->pic.use_argb = 1; }
       else { WebPConfigInit(&(this->config)); this->pic.use_argb = 0; }
@@ -48,8 +58,34 @@ class WebPEnc {
       if (!WebPEncode(&(this->config), &(this->pic))) { return this->pic.error_code; }
       return 0;
     }
-    uint8_t *getResult() { return this->writer.mem; }
+    // Clunky workaround for Embind not supporting pointers to primitives (this should return uint8_t*)
+    int getResult() { return (int)this->writer.mem; }
     size_t getResultSize() { return this->writer.size; }
+    bool advImageHint(int en) { if (!this->ready) { return false; } this->config.image_hint = (WebPImageHint)en; return true; }
+    bool advTargetSize(int s) { if (!this->ready) { return false; } this->config.target_size = s; return true; }
+    bool advTargetPSNR(float psnr) { if (!this->ready) { return false; } this->config.target_PSNR = psnr; return true; }
+    bool advSegments(int seg) { if (!this->ready) { return false; } this->config.segments = seg; return true; }
+    bool advSnsStrength(int str) { if (!this->ready) { return false; } this->config.sns_strength = str; return true; }
+    bool advFilterStrength(int str) { if (!this->ready) { return false; } this->config.filter_strength = str; return true; }
+    bool advFilterSharpness(int shr) { if (!this->ready) { return false; } this->config.filter_sharpness = shr ? 1 : 0; return true; }
+    bool advFilterType(int type) { if (!this->ready) { return false; } this->config.filter_type = type ? 1 : 0; return true; }
+    bool advAutoFilter(int filter) { if (!this->ready) { return false; } this->config.autofilter = filter ? 1 : 0; return true; }
+    bool advAlphaCompression(int comp) { if (!this->ready) { return false; } this->config.alpha_compression = comp; return true; }
+    bool advAlphaFiltering(int filter) { if (!this->ready) { return false; } this->config.alpha_filtering = filter; return true; }
+    bool advAlphaQuality(int qual) { if (!this->ready) { return false; } this->config.alpha_quality = qual; return true; }
+    bool advPass(int pass) { if (!this->ready) { return false; } this->config.pass = pass; return true; }
+    bool advShowCompressed(int comp) { if (!this->ready) { return false; } this->config.show_compressed = comp ? 1 : 0; return true; }
+    bool advPreprocessing(int prepro) { if (!this->ready) { return false; } this->config.preprocessing = prepro; return true; }
+    bool advPartitions(int parts) { if (!this->ready) { return false; } this->config.partitions = parts; return true; }
+    bool advPartitionLimit(int limit) { if (!this->ready) { return false; } this->config.partition_limit = limit; return true; }
+    bool advEmulateJpegSize(int emulate) { if (!this->ready) { return false; } this->config.emulate_jpeg_size = emulate ? 1 : 0; return true; }
+    bool advThreadLevel(int threads) { if (!this->ready) { return false; } this->config.thread_level = threads; return true; }
+    bool advLowMemory(int low) { if (!this->ready) { return false; } this->config.low_memory = low ? 1 : 0; return true; }
+    bool advNearLossless(int near) { if (!this->ready) { return false; } this->config.near_lossless = near; return true; }
+    bool advUseDeltaPalette(int delta) { if (!this->ready) { return false; } this->config.use_delta_palette = 0 /*delta*/; return true; }
+    bool advUseSharpYUV(int sharp) { if (!this->ready) { return false; } this->config.use_sharp_yuv = sharp ? 1 : 0; return true; }
+    bool advQMin(int min) { if (!this->ready) { return false; } this->config.qmin = min; return true; }
+    bool advQMax(int max) { if (!this->ready) { return false; } this->config.qmax = max; return true; }
   private:
     bool ready;
     bool picAlloc;
@@ -57,24 +93,52 @@ class WebPEnc {
     WebPPicture pic;
     WebPMemoryWriter writer;
 };
-extern "C" {
 // Encoder hooks
-EMSCRIPTEN_KEEPALIVE WebPEnc *encoderCreate() { return new WebPEnc(); }
-EMSCRIPTEN_KEEPALIVE void encoderDestroy(WebPEnc *p) { delete p; }
-EMSCRIPTEN_KEEPALIVE bool encoderInit(WebPEnc *enc) { return enc->init(); }
-EMSCRIPTEN_KEEPALIVE void encoderReset(WebPEnc *enc) { enc->reset(); }
-EMSCRIPTEN_KEEPALIVE bool encoderLoadRGBA(WebPEnc *enc, const uint8_t *input, int width, int height) { return enc->loadRGBA(input, width, height); }
-EMSCRIPTEN_KEEPALIVE bool encoderSetLossless(WebPEnc *enc, int en) { return enc->setLossless(en); }
-EMSCRIPTEN_KEEPALIVE bool encoderSetQuality(WebPEnc *enc, float q) { return enc->setQuality(q); }
-EMSCRIPTEN_KEEPALIVE bool encoderSetMethod(WebPEnc *enc, int m) { return enc->setMethod(m); }
-EMSCRIPTEN_KEEPALIVE bool encoderSetExact(WebPEnc *enc, bool ex) { return enc->setExact(ex); }
-EMSCRIPTEN_KEEPALIVE int encoderRun(WebPEnc *enc) { return enc->encode(); }
-EMSCRIPTEN_KEEPALIVE uint8_t *encoderGetResult(WebPEnc *enc) { return enc->getResult(); }
-EMSCRIPTEN_KEEPALIVE size_t encoderGetResultSize(WebPEnc *enc) { return enc->getResultSize(); }
-// Decoder hooks
-EMSCRIPTEN_KEEPALIVE uint8_t *decodeRGBA(const uint8_t *data, size_t dataSize) { return WebPDecodeRGBA(data, dataSize, 0, 0); }
-EMSCRIPTEN_KEEPALIVE void decodeFree(uint8_t *data) { WebPFree(data); }
-// Utility
-EMSCRIPTEN_KEEPALIVE uint8_t *allocBuffer(size_t size) { return (uint8_t*)malloc(size * sizeof(uint8_t)); }
-EMSCRIPTEN_KEEPALIVE void destroyBuffer(uint8_t *p) { free(p); }
+EMSCRIPTEN_BINDINGS(WebPBinding) {
+  class_<WebPEnc>("WebPEnc")
+  .constructor<>()
+  .function("init", &WebPEnc::init)
+  .function("reset", &WebPEnc::reset)
+  .function("loadRGBA", &WebPEnc::loadRGBA)
+  .function("setPreset", &WebPEnc::setPreset)
+  .function("setLosslessPreset", &WebPEnc::setLosslessPreset)
+  .function("setQuality", &WebPEnc::setQuality)
+  .function("setMethod", &WebPEnc::setMethod)
+  .function("setExact", &WebPEnc::setExact)
+  .function("encode", &WebPEnc::encode)
+  .function("getResult", &WebPEnc::getResult)
+  .function("getResultSize", &WebPEnc::getResultSize)
+  .function("advImageHint", &WebPEnc::advImageHint)
+  .function("advTargetSize", &WebPEnc::advTargetSize)
+  .function("advTargetPSNR", &WebPEnc::advTargetPSNR)
+  .function("advSegments", &WebPEnc::advSegments)
+  .function("advSnsStrength", &WebPEnc::advSnsStrength)
+  .function("advFilterStrength", &WebPEnc::advFilterStrength)
+  .function("advFilterSharpness", &WebPEnc::advFilterSharpness)
+  .function("advFilterType", &WebPEnc::advFilterType)
+  .function("advAutoFilter", &WebPEnc::advAutoFilter)
+  .function("advAlphaCompression", &WebPEnc::advAlphaCompression)
+  .function("advAlphaFiltering", &WebPEnc::advAlphaFiltering)
+  .function("advAlphaQuality", &WebPEnc::advAlphaQuality)
+  .function("advPass", &WebPEnc::advPass)
+  .function("advShowCompressed", &WebPEnc::advShowCompressed)
+  .function("advPreprocessing", &WebPEnc::advPreprocessing)
+  .function("advPartitions", &WebPEnc::advPartitions)
+  .function("advPartitionLimit", &WebPEnc::advPartitionLimit)
+  .function("advEmulateJpegSize", &WebPEnc::advEmulateJpegSize)
+  .function("advThreadLevel", &WebPEnc::advThreadLevel)
+  .function("advLowMemory", &WebPEnc::advLowMemory)
+  .function("advNearLossless", &WebPEnc::advNearLossless)
+  .function("advUseDeltaPalette", &WebPEnc::advUseDeltaPalette)
+  .function("advUseSharpYUV", &WebPEnc::advUseSharpYUV)
+  .function("advQMin", &WebPEnc::advQMin)
+  .function("advQMax", &WebPEnc::advQMax);
+}
+extern "C" {
+  // Decoder
+  EMSCRIPTEN_KEEPALIVE uint8_t *decodeRGBA(const uint8_t *data, size_t dataSize) { return WebPDecodeRGBA(data, dataSize, 0, 0); }
+  EMSCRIPTEN_KEEPALIVE void decodeFree(uint8_t *data) { WebPFree(data); }
+  // Utility
+  EMSCRIPTEN_KEEPALIVE uint8_t *allocBuffer(size_t size) { return (uint8_t*)malloc(size * sizeof(uint8_t)); }
+  EMSCRIPTEN_KEEPALIVE void destroyBuffer(uint8_t *p) { free(p); }
 }
