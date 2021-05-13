@@ -70,7 +70,7 @@ function createBasicChunk(name, data) {
   else { return { size: size + 8, chunks: [ header, data ] }; }
 }
 class WebPReader {
-  type = intfTypes.NONE;
+  constructor() { this.type = intfTypes.NONE; }
   readFile(path) { this.type = intfTypes.FILE; this.path = path; }
   readBuffer(buf) { this.type = intfTypes.BUFFER; this.buf = buf; this.cursor = 0; }
   async readBytes(n, mod) {
@@ -253,10 +253,7 @@ class WebPReader {
   }
 }
 class WebPWriter {
-  type = intfTypes.NONE;
-  chunks = [];
-  width = 0;
-  height = 0;
+  constructor() { this.type = intfTypes.NONE; this.chunks = []; this.width = this.height = 0; }
   reset() { this.chunks.length = 0; width = 0; height = 0; }
   writeFile(path) { this.type = intfTypes.FILE; this.path = path; }
   writeBuffer() { this.type = intfTypes.BUFFER; }
@@ -408,10 +405,7 @@ class WebPWriter {
   writeChunk_XMP(xmp) { this.writeBytes(...((createBasicChunk('XMP ', xmp.raw)).chunks)); }
 }
 class Image {
-  data = null;
-  loaded = false;
-  path = '';
-  libwebp = undefined;
+  constructor() { this.data = null; this.loaded = false; this.path = ''; this.libwebp = undefined; }
   async initLib() {
     const libWebP = require('./libwebp.js');
     if (!this.libwebp) { this.libwebp = new libWebP(); await this.libwebp.init(); }
