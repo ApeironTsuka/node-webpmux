@@ -237,7 +237,7 @@ Options:
       Default is 100.
 
 If `lossless` is set above 0, then setting `quality` or `method` is discouraged as they will override settings in the lossless preset.<br />
-Return value can be checked against the values in encodeResults.
+Return value can be checked against the values in `WebP.encodeResults`.
 
 ##### `async .getFrameData(frame)`
 Get the raw RGBA pixel data for a specific frame.<br />
@@ -245,7 +245,7 @@ Use this for animations.<br />
 Otherwise identical to `.getImageData()`.
 
 ##### `async .setFrameData(frame, buffer, { width = 0, height = 0, preset = 0, quality = 75, exact = false, lossless = 0, method = 4, advanced = undefined })`
-Encode `buf` as a new WebP using the provided settings and replace an existing frame's pixel data with it.<br />
+Encode `buffer` as a new WebP using the provided settings and replace an existing frame's pixel data with it.<br />
 Use this for animations.<br />
 Otherwise identical to `.setImageData()`.
 
@@ -255,13 +255,13 @@ Otherwise identical to `.setImageData()`.
 Save the `options` to `path` using `Image.getEmptyImage()`.<br />
 Works the same as `.save()` otherwise.<br />
 Can be used to create an animation from scratch by passing `frames` in `options`.<br />
-&ensp; Example: `Image.save('animation.webp', undefined, { frames: ... })`
+&ensp; Example: `Image.save('animation.webp', { frames: ... })`
 
 ##### `async Image.saveBuffer(options)`
 Save the `options` using `Image.getEmptyImage()` to a buffer and return it.<br />
 Works the same as `.saveBuffer()` otherwise.<br />
 Can be used to create an animation from scratch by passing `frames` in `options`.<br />
-&ensp; Example: `Image.saveBuffer(undefined, { frames: ... })`
+&ensp; Example: `Image.saveBuffer({ frames: ... })`
 
 ##### `async Image.getEmptyImage(ext)`
 Returns a basic, lossy 1x1 black image with no alpha or metadata.<br />
