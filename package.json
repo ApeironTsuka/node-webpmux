@@ -1,6 +1,6 @@
 {
   "name": "node-webpmux",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "description": "A pure Javascript/WebAssembly re-implementation of webpmux",
   "main": "webp.js",
   "scripts": {
