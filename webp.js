@@ -494,7 +494,7 @@ class Image {
     if (frame != -1) { start = _end = frame; }
     for (let i = start; i <= _end; i++) {
       if (path) { await this.#demuxFrameFile((`${path}/${prefix}_${i}.webp`).replace(/#FNAME#/g, basename(this.path, '.webp')), this.anim.frames[i]); }
-      else { bufs.push(this.#demuxFrameBuffer(i)); }
+      else { bufs.push(this.#demuxFrameBuffer(this.anim.frames[i])); }
     }
     if (buffers) { return bufs; }
   }
