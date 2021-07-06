@@ -75,46 +75,33 @@ A Buffer containing the raw XMP data stored in the image, or undefined if there 
 #### Image member functions
 
 ##### `async .initLib()`
-Initialize the internal library used for [get/set]ImageData and [get/set]FrameData described below.<br />
-There is no need to call this unless you plan to use one of those 4 functions.
+Calls Image.initLib(). This member function is no longer particularly useful and is kept for convenience.
 
-##### `async .load(path)`
-Tries to load `path` as a WebP image.
-
-##### `async .loadBuffer(buffer)`
-Tries to load the contents of `buffer` as a WebP image.
+##### `async .load(source)`
+If `source` is a string, it tries to load that as a path to a WebP image.<br />
+If `source` is a buffer, it tries to load the contents of the buffer as a WebP image.
 
 ##### `.convertToAnim()`
 Sets the image up for being an animation.
 
-##### `async .demux(path, { frame = -1, prefix = '#FNAME#', start = 0, end = 0 })`
+##### `async .demux({ path = undefined, buffers = false, frame = -1, prefix = '#FNAME#', start = 0, end = 0 })`
 Dump the individual, unprocessed WebP frames to a directory.
-* `path`: The directory to dump the frames to.
+* `path`: The directory to dump the frames to, if desired.
+* `buffers`: Return the frames as an array of Buffers instead of dumping to a path.
 * `prefix`: What to prefix the frame names with. Default is the file name of the original image (without .webp).
     Format is \<prefix\>_\<frame number\>.webp.
 * `frame`: What frame to dump. Defaults to -1, which has it dump all available frames. Overrides `start`/`end`.
 * `start`: The first frame to dump. Defaults to the first frame.
 * `end`: The last frame to dump. Defaults to the last frame.
 
-##### `async .demuxToBuffers({ frame = -1, start = 0, end = 0 })`
-Dump the individual, unprocessed WebP frames to an array of Buffers.
-* `frame`, `start`, and `end` all work the same as in `async .demux` above.
-
-##### `async .replaceFrame(frame, path)`
-Replaces a frame in the animation with another image from disk. All other frame settings are preserved.
+##### `async .replaceFrame(frame, source)`
+Replaces a frame in the animation with another image from `source`. All other frame settings are preserved.
 * `frame`: Which frame to replace. Frame indexes are 0-based.
-* `path`: The new frame image.
-
-##### `async .replaceFrameBuffer(frame, buffer)`
-Replaces a frame in the animation with another image from a buffer. All other frame settings are preserved.
-* `frame`: Which frame to replace. Frame indexes are 0-based.
-* `buffer`: The new frame image.
+* `source`: If this is a string, the frame is loaded from disk. If this is a Buffer, the frame is loaded from there.
 
 ##### `async .save(path = this.path, options)`
-Save the image to `path`. Options are described below in the _Options for saving_ section.
-
-##### `async .saveBuffer(options)`
-Save the image to a buffer and return it. Options are described below in the _Options for saving_ section.
+Save the image to `path`. Options are described below in the _Options for saving_ section.<br />
+If `path` is `null`, this will save the image to a Buffer and return it.
 
 ##### `async .getImageData()`
 Get the raw RGBA pixel data for the image.<br />
@@ -251,17 +238,17 @@ Otherwise identical to `.setImageData()`.
 
 #### Static functions
 
+##### `async Image.initLib()`
+Initialize the internal library used for [get/set]ImageData and [get/set]FrameData described above.<br />
+There is no need to call this unless you plan to use one of those 4 functions.
+
 ##### `async Image.save(path, options)`
-Save the `options` to `path` using `Image.getEmptyImage()`.<br />
+Save the `options` using `Image.getEmptyImage()`.<br />
 Works the same as `.save()` otherwise.<br />
 Can be used to create an animation from scratch by passing `frames` in `options`.<br />
-&ensp; Example: `Image.save('animation.webp', { frames: ... })`
-
-##### `async Image.saveBuffer(options)`
-Save the `options` using `Image.getEmptyImage()` to a buffer and return it.<br />
-Works the same as `.saveBuffer()` otherwise.<br />
-Can be used to create an animation from scratch by passing `frames` in `options`.<br />
-&ensp; Example: `Image.saveBuffer({ frames: ... })`
+&ensp; Example: `Image.save('animation.webp', { frames: ... })` for saving to file
+&ensp; OR
+&ensp; Example: `Image.save(null, { frames: ... })` for saving to Buffer
 
 ##### `async Image.getEmptyImage(ext)`
 Returns a basic, lossy 1x1 black image with no alpha or metadata.<br />
@@ -321,7 +308,7 @@ Note that, at the moment, only *static* images are supported in this function.
 ### Information about the internal library
 
 [get/set]ImageData and [get/set]FrameData are powered by Google's official libwebp library obtained from the [GitHub mirror](https://github.com/webmproject/libwebp).<br />
-Commit 685d073 was the latest at the time of compilation.<br />
+Commit a2e18f10 was the latest at the time of compilation.<br />
 This library was compiled with Emscripten with the command `emcc -O3 -s WASM=1 -s MODULARIZE -s EXTRA_EXPORTED_RUNTIME_METHODS='[cwrap]' -s ALLOW_MEMORY_GROWTH=1  -I libwebp binding.cpp libwebp/src/{dec,dsp,demux,enc,mux,utils}/*.c --bind -o libwebp.js`.<br />
 binding.cpp is a shim I wrote to bridge the needed parts together and can be found in the libwebp/ directory.
 libwebp.mjs, found in the root, is the Javascript interface to it.
@@ -405,3 +392,24 @@ Image.muxAnim and .muxAnim were merged into Image.save and .save respectively.
 
 ## Breaking changes from 2.0.0 to 2.0.1
 Image.generateFrame()'s `duration` input renamed to `delay`<br />
+
+## Breaking changes from 2.x to 3.0.0
+File and buffer codepaths have been merged.
+* Replace `.loadBuffer(buffer)`
+* With `.load(buffer)`
+* Replace `Image.loadBuffer(buffer)`
+* With `Image.load(buffer)`
+<br /><br />
+* Replace `.saveBuffer(settings)`
+* With `.save(null, settings)`
+* Replace `Image.saveBuffer(settings)`
+* With `Image.save(null, settings)`
+* Note that it's specifically `null` here. This is because the default behavior of .save() is still saving to the path it was loaded from.
+<br /><br />
+* Replace `.demuxToBuffers({ setting, setting, ... })`
+* With `.demux({ buffers: true, setting, setting, ... })`
+* Replace `.demux(path, settings)`
+* With `.demux({ path, setting, setting, ... })`
+<br /><br />
+* Replace `.replaceFrameBuffer(frame, buffer)`
+* With `.replaceFrame(frame, buffer)`

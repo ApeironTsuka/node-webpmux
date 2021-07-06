@@ -45,11 +45,8 @@ const imagePresets = {
 };
 
 class Image {
-  constructor() { this.data = null; this.loaded = false; this.path = ''; this.libwebp = undefined; }
-  async initLib() {
-    const libWebP = require('./libwebp.js');
-    if (!this.libwebp) { this.libwebp = new libWebP(); await this.libwebp.init(); }
-  }
+  constructor() { this.data = null; this.loaded = false; this.path = ''; }
+  async initLib() { return Image.initLib(); }
   clear() { this.data = null; this.path = ''; this.loaded = false; }
   // Convenience getters/setters
   get width() { let d = this.data; return !this.loaded ? undefined : d.extended ? d.extended.width : d.vp8l ? d.vp8l.width : d.vp8 ? d.vp8.width : undefined; }
@@ -90,18 +87,10 @@ class Image {
       height: this.data.vp8 ? this.data.vp8.height : this.data.vp8l ? this.data.vp8l.height : 1
     };
   }
-  async #demuxFrameFile(path, frame) {
-    let writer = new WebPWriter();
-    writer.writeFile(path);
-    return this.#demuxFrame(writer, frame);
-  }
-  async #demuxFrameBuffer(frame) {
-    let writer = new WebPWriter();
-    writer.writeBuffer();
-    return this.#demuxFrame(writer, frame);
-  }
-  async #demuxFrame(writer, frame) {
-    let { hasICCP, hasEXIF, hasXMP } = this.data.extended ? this.data.extended : { hasICCP: false, hasEXIF: false, hasXMP: false }, hasAlpha = ((frame.vp8) && (frame.vp8.alpha));
+  async #demuxFrame(d, frame) {
+    let { hasICCP, hasEXIF, hasXMP } = this.data.extended ? this.data.extended : { hasICCP: false, hasEXIF: false, hasXMP: false }, hasAlpha = ((frame.vp8) && (frame.vp8.alpha)), writer = new WebPWriter();
+    if (typeof d === 'string') { writer.writeFile(d); }
+    else { writer.writeBuffer(); }
     writer.writeFileHeader();
     if ((hasICCP) || (hasEXIF) || (hasXMP) || (hasAlpha)) {
       writer.writeChunk_VP8X({
@@ -109,8 +98,8 @@ class Image {
         hasEXIF,
         hasXMP,
         hasAlpha: ((frame.vp8l) && (frame.vp8l.alpha)) || hasAlpha,
-        width: frame.width - 1,
-        height: frame.height - 1
+        width: frame.width,
+        height: frame.height
       });
     }
     if (frame.vp8l) { writer.writeChunk_VP8L(frame.vp8l); }
@@ -124,64 +113,6 @@ class Image {
       if (this.data.extended.hasXMP) { writer.writeChunk_XMP(this.data.xmp); }
     }
     return writer.commit();
-  }
-  async #demux({ path, buffers, frame, prefix, start, end } = {}) {
-    if (!this.hasAnim) { throw new Error("This image isn't an animation"); }
-    let _end = end == 0 ? this.frames.length : end, bufs = [];
-    if (start < 0) { start = 0; }
-    if (_end >= this.frames.length) { _end = this.frames.length - 1; }
-    if (start > _end) { let n = start; start = _end; _end = n; }
-    if (frame != -1) { start = _end = frame; }
-    for (let i = start; i <= _end; i++) {
-      if (path) { await this.#demuxFrameFile((`${path}/${prefix}_${i}.webp`).replace(/#FNAME#/g, IO.basename(this.path, '.webp')), this.anim.frames[i]); }
-      else { bufs.push(this.#demuxFrameBuffer(this.anim.frames[i])); }
-    }
-    if (buffers) { return bufs; }
-  }
-  async #replaceFrame(frame, path, buffer) {
-    if (!this.hasAnim) { throw new Error("WebP isn't animated"); }
-    if ((frame < 0) || (frame >= this.frames.length)) { throw new Error(`Frame index ${frame} out of bounds (0 <= index < ${this.frames.length})`); }
-    let r = new Image(), fr = this.frames[frame];
-    if (path) { await r.load(path); }
-    else { await r.loadBuffer(buffer); }
-    switch (r.type) {
-      case constants.TYPE_LOSSY:
-      case constants.TYPE_LOSSLESS:
-        break;
-      case constants.TYPE_EXTENDED:
-        if (r.hasAnim) { throw new Error('Merging animations not currently supported'); }
-        break;
-      default: throw new Error('Unknown WebP type');
-    }
-    switch (fr.type) {
-      case constants.TYPE_LOSSY:
-        if (fr.vp8.alpha) { delete fr.alph; }
-        delete fr.vp8;
-        break;
-      case constants.TYPE_LOSSLESS:
-        delete fr.vp8l;
-        break;
-      default: throw new Error('Unknown frame type');
-    }
-    switch (r.type) {
-      case constants.TYPE_LOSSY:
-        fr.vp8 = r.data.vp8;
-        fr.type = constants.TYPE_LOSSY;
-        break;
-      case constants.TYPE_LOSSLESS:
-        fr.vp8l = r.data.vp8l;
-        fr.type = constants.TYPE_LOSSLESS;
-        break;
-      case constants.TYPE_EXTENDED:
-        if (r.data.vp8) {
-          fr.vp8 = r.data.vp8;
-          if (r.data.vp8.alpha) { fr.alph = r.data.alph; }
-          fr.type = constants.TYPE_LOSSY;
-        } else if (r.data.vp8l) { fr.vp8l = r.data.vp8l; fr.type = constants.TYPE_LOSSLESS; }
-        break;
-    }
-    fr.width = r.width;
-    fr.height = r.height;
   }
   async #save(writer, { width = undefined, height = undefined, frames = undefined, bgColor = [ 255, 255, 255, 255 ], loops = 0, delay = 100, x = 0, y = 0, blend = true, dispose = false, exif = false, iccp = false, xmp = false } = {}) {
     let _width = width !== undefined ? width : this.width - 1, _height = height !== undefined ? height : this.height - 1, isAnim = this.hasAnim || frames !== undefined;
@@ -224,7 +155,7 @@ class Image {
               else if ((_x < 0) || (_x >= (1 << 24))) { throw new Error(`X out of range on frame ${i}`); }
               else if ((_y < 0) || (_y >= (1 << 24))) { throw new Error(`Y out of range on frame ${i}`); }
               if (fr.path) { img = new Image(); await img.load(fr.path); img = img.data; }
-              else if (fr.buffer) { img = new Image(); await img.loadBuffer(fr.buffer); img = img.data; }
+              else if (fr.buffer) { img = new Image(); await img.load(fr.buffer); img = img.data; }
               else if (fr.img) { img = fr.img.data; }
               else { img = fr; }
               writer.writeChunk_ANMF({
@@ -253,17 +184,11 @@ class Image {
     return writer.commit();
   }
   // Public member functions
-  async load(path) {
+  async load(d) {
     if (!IO.avail) { await IO.err(); }
     let reader = new WebPReader();
-    reader.readFile(path);
-    this.path = path;
-    this.data = await reader.read();
-    this.loaded = true;
-  }
-  async loadBuffer(buf) {
-    let reader = new WebPReader();
-    reader.readBuffer(buf);
+    if (typeof d === 'string') { reader.readFile(d); this.path = d; }
+    else { reader.readBuffer(d); }
     this.data = await reader.read();
     this.loaded = true;
   }
@@ -280,37 +205,85 @@ class Image {
       frames: []
     };
   }
-  async demux(path, { frame = -1, prefix = '#FNAME#', start = 0, end = 0 } = {}) { return this.#demux({ path, frame, prefix, start, end }); }
-  async demuxToBuffers({ frame = -1, start = 0, end = 0 } = {}) { return this.#demux({ buffers: true, frame, start, end }); }
-  async replaceFrame(frame, path) { return this.#replaceFrame(frame, path); }
-  async replaceFrameBuffer(frame, buffer) { return this.#replaceFrame(frame, undefined, buffer); }
+  async demux({ path = undefined, buffers = false, frame = -1, prefix = '#FNAME#', start = 0, end = 0 } = {}) {
+    if (!this.hasAnim) { throw new Error("This image isn't an animation"); }
+    let _end = end == 0 ? this.frames.length : end, bufs = [];
+    if (start < 0) { start = 0; }
+    if (_end >= this.frames.length) { _end = this.frames.length - 1; }
+    if (start > _end) { let n = start; start = _end; _end = n; }
+    if (frame != -1) { start = _end = frame; }
+    for (let i = start; i <= _end; i++) {
+      let t = await this.#demuxFrame(path ? (`${path}/${prefix}_${i}.webp`).replace(/#FNAME#/g, IO.basename(this.path, '.webp')) : undefined, this.anim.frames[i]);
+      if (buffers) { bufs.push(t); }
+    }
+    if (buffers) { return bufs; }
+  }
+  async replaceFrame(frame, d) {
+    if (!this.hasAnim) { throw new Error("WebP isn't animated"); }
+    if ((frame < 0) || (frame >= this.frames.length)) { throw new Error(`Frame index ${frame} out of bounds (0 <= index < ${this.frames.length})`); }
+    let r = new Image(), fr = this.frames[frame];
+    await r.load(d);
+    switch (r.type) {
+      case constants.TYPE_LOSSY:
+      case constants.TYPE_LOSSLESS:
+        break;
+      case constants.TYPE_EXTENDED:
+        if (r.hasAnim) { throw new Error('Merging animations not currently supported'); }
+        break;
+      default: throw new Error('Unknown WebP type');
+    }
+    switch (fr.type) {
+      case constants.TYPE_LOSSY:
+        if (fr.vp8.alpha) { delete fr.alph; }
+        delete fr.vp8;
+        break;
+      case constants.TYPE_LOSSLESS:
+        delete fr.vp8l;
+        break;
+      default: throw new Error('Unknown frame type');
+    }
+    switch (r.type) {
+      case constants.TYPE_LOSSY:
+        fr.vp8 = r.data.vp8;
+        fr.type = constants.TYPE_LOSSY;
+        break;
+      case constants.TYPE_LOSSLESS:
+        fr.vp8l = r.data.vp8l;
+        fr.type = constants.TYPE_LOSSLESS;
+        break;
+      case constants.TYPE_EXTENDED:
+        if (r.data.vp8) {
+          fr.vp8 = r.data.vp8;
+          if (r.data.vp8.alpha) { fr.alph = r.data.alph; }
+          fr.type = constants.TYPE_LOSSY;
+        } else if (r.data.vp8l) { fr.vp8l = r.data.vp8l; fr.type = constants.TYPE_LOSSLESS; }
+        break;
+    }
+    fr.width = r.width;
+    fr.height = r.height;
+  }
   async save(path = this.path, { width = this.width, height = this.height, frames = this.frames, bgColor = this.hasAnim ? this.anim.bgColor : [ 255, 255, 255, 255 ], loops = this.hasAnim ? this.anim.loops : 0, delay = 100, x = 0, y = 0, blend = true, dispose = false, exif = !!this.exif, iccp = !!this.iccp, xmp = !!this.xmp } = {}) {
     if (!IO.avail) { await IO.err(); }
-    if (!path) { throw new Error('Cannot save to disk without a path'); }
     let writer = new WebPWriter();
-    writer.writeFile(path);
-    return this.#save(writer, { width, height, frames, bgColor, loops, delay, x, y, blend, dispose, exif, iccp, xmp });
-  }
-  async saveBuffer({ width = this.width, height = this.height, frames = this.frames, bgColor = this.hasAnim ? this.anim.bgColor : [ 255, 255, 255, 255 ], loops = this.hasAnim ? this.anim.loops : 0, delay = 100, x = 0, y = 0, blend = true, dispose = false, exif = !!this.exif, iccp = !!this.iccp, xmp = !!this.xmp } = {}) {
-    let writer = new WebPWriter();
-    writer.writeBuffer();
+    if (path !== null) { writer.writeFile(path); }
+    else { writer.writeBuffer(); }
     return this.#save(writer, { width, height, frames, bgColor, loops, delay, x, y, blend, dispose, exif, iccp, xmp });
   }
   async getImageData() {
-    if (!this.libwebp) { throw new Error('Must call .initLib() before using getImageData'); }
+    if (!Image.libwebp) { throw new Error('Must call Image.initLib() before using getImageData'); }
     if (this.hasAnim) { throw new Error('Calling getImageData on animations is not supported'); }
-    let buf = await this.saveBuffer(), { libwebp } = this;
-    return libwebp.decodeImage(buf, this.width, this.height);
+    let buf = await this.save(null);
+    return Image.libwebp.decodeImage(buf, this.width, this.height);
   }
   async setImageData(buf, { width = 0, height = 0, preset = undefined, quality = undefined, exact = undefined, lossless = undefined, method = undefined, advanced = undefined } = {}) {
-    if (!this.libwebp) { throw new Error('Must call .initLib() before using setImageData'); }
+    if (!Image.libwebp) { throw new Error('Must call Image.initLib() before using setImageData'); }
     if (this.hasAnim) { throw new Error('Calling setImageData on animations is not supported'); }
     if ((quality !== undefined) && ((quality < 0) || (quality > 100))) { throw new Error('Quality out of range'); }
     if ((lossless !== undefined) && ((lossless < 0) || (lossless > 9))) { throw new Error('Lossless preset out of range'); }
     if ((method !== undefined) && ((method < 0) || (method > 6))) { throw new Error('Method out of range'); }
-    let { libwebp } = this, ret = libwebp.encodeImage(buf, width > 0 ? width : this.width, height > 0 ? height : this.height, { preset, quality, exact, lossless, method, advanced }), img = new Image(), keepEx = false, ex;
+    let ret = Image.libwebp.encodeImage(buf, width > 0 ? width : this.width, height > 0 ? height : this.height, { preset, quality, exact, lossless, method, advanced }), img = new Image(), keepEx = false, ex;
     if (ret.res !== encodeResults.SUCCESS) { return ret.res; }
-    await img.loadBuffer(Buffer.from(ret.buf));
+    await img.load(Buffer.from(ret.buf));
     switch (this.type) {
       case constants.TYPE_LOSSY: delete this.data.vp8; break;
       case constants.TYPE_LOSSLESS: delete this.data.vp8l; break;
@@ -346,22 +319,22 @@ class Image {
     return encodeResults.SUCCESS;
   }
   async getFrameData(frame) {
-    if (!this.libwebp) { throw new Error('Must call .initLib() before using getFrameData'); }
+    if (!Image.libwebp) { throw new Error('Must call Image.initLib() before using getFrameData'); }
     if (!this.hasAnim) { throw new Error('Calling getFrameData on non-animations is not supported'); }
     if ((frame < 0) || (frame >= this.frames.length)) { throw new Error('Frame index out of range'); }
-    let fr = this.frames[frame], buf = await this.#demuxFrameBuffer(fr), { libwebp } = this;
-    return libwebp.decodeImage(buf, fr.width, fr.height);
+    let fr = this.frames[frame], buf = await this.#demuxFrame(null, fr);
+    return Image.libwebp.decodeImage(buf, fr.width, fr.height);
   }
   async setFrameData(frame, buf, { width = 0, height = 0, preset = undefined, quality = undefined, exact = undefined, lossless = undefined, method = undefined, advanced = undefined } = {}) {
-    if (!this.libwebp) { throw new Error('Must call .initLib() before using setFrameData'); }
+    if (!Image.libwebp) { throw new Error('Must call Image.initLib() before using setFrameData'); }
     if (!this.hasAnim) { throw new Error('Calling setFrameData on non-animations is not supported'); }
     if ((frame < 0) || (frame >= this.frames.length)) { throw new Error('Frame index out of range'); }
     if ((quality !== undefined) && ((quality < 0) || (quality > 100))) { throw new Error('Quality out of range'); }
     if ((lossless !== undefined) && ((lossless < 0) || (lossless > 9))) { throw new Error('Lossless preset out of range'); }
     if ((method !== undefined) && ((method < 0) || (method > 6))) { throw new Error('Method out of range'); }
-    let fr = this.frames[frame], { libwebp } = this, ret = libwebp.encodeImage(buf, width > 0 ? width : fr.width, height > 0 ? height : fr.height, { preset, quality, exact, lossless, method, advanced }), img = new Image();
+    let fr = this.frames[frame], ret = Image.libwebp.encodeImage(buf, width > 0 ? width : fr.width, height > 0 ? height : fr.height, { preset, quality, exact, lossless, method, advanced }), img = new Image();
     if (ret.res !== encodeResults.SUCCESS) { return ret.res; }
-    await img.loadBuffer(Buffer.from(ret.buf));
+    await img.load(Buffer.from(ret.buf));
     switch (fr.type) {
       case constants.TYPE_LOSSY: delete fr.vp8; if (fr.alph) { delete fr.alph; } break;
       case constants.TYPE_LOSSLESS: delete fr.vp8l; break;
@@ -385,22 +358,21 @@ class Image {
     return encodeResults.SUCCESS;
   }
   // Public static functions
-  static async save(path, opts) {
+  static async initLib() {
+    if (!Image.libwebp) {
+      const libWebP = require('./libwebp.js');
+      Image.libwebp = new libWebP();
+      await Image.libwebp.init();
+    }
+  }
+  static async save(d, opts) {
     if (!IO.avail) { await IO.err(); }
     if ((opts.frames) && ((opts.width === undefined) || (opts.height === undefined))) { throw new Error('Must provide both width and height when passing frames'); }
-    let writer = new WebPWriter();
-    writer.writeFile(path);
-    return (await Image.getEmptyImage(!!opts.frames)).save(path, opts);
-  }
-  static async saveBuffer(opts) {
-    if ((opts.frames) && ((opts.width === undefined) || (opts.height === undefined))) { throw new Error('Must provide both width and height when passing frames'); }
-    let writer = new WebPWriter();
-    writer.writeBuffer();
-    return (await Image.getEmptyImage(!!opts.frames)).saveBuffer(path, opts);
+    return (await Image.getEmptyImage(!!opts.frames)).save(d, opts);
   }
   static async getEmptyImage(ext) {
     let img = new Image();
-    await img.loadBuffer(emptyImageBuffer);
+    await img.load(emptyImageBuffer);
     if (ext) { img.exif = undefined; }
     return img;
   }
@@ -411,7 +383,7 @@ class Image {
     if (!img) {
       _img = new Image();
       if (path) { await _img.load(path); }
-      else { await _img.loadBuffer(buffer); }
+      else { await _img.load(buffer); }
     }
     if (_img.hasAnim) { throw new Error('Merging animations is not currently supported'); }
     return {
