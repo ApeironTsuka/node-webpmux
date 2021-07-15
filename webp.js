@@ -58,24 +58,24 @@ class Image {
   get frames() { return this.anim ? this.anim.frames : undefined; }
   get iccp() { return this.data.extended ? this.data.extended.hasICCP ? this.data.iccp.raw : undefined : undefined; }
   set iccp(raw) {
-    if (!this.data.extended) { this.#convertToExtended(); }
+    if (!this.data.extended) { this._convertToExtended(); }
     if (raw === undefined) { this.data.extended.hasICCP = false; delete this.data.iccp; }
     else { this.data.iccp = { raw }; this.data.extended.hasICCP = true; }
   }
   get exif() { return this.data.extended ? this.data.extended.hasEXIF ? this.data.exif.raw : undefined : undefined; }
   set exif(raw) {
-    if (!this.data.extended) { this.#convertToExtended(); }
+    if (!this.data.extended) { this._convertToExtended(); }
     if (raw === undefined) { this.data.extended.hasEXIF = false; delete this.data.exif; }
     else { this.data.exif = { raw }; this.data.extended.hasEXIF = true; }
   }
   get xmp() { return this.data.extended ? this.data.extended.hasXMP ? this.data.xmp.raw : undefined : undefined; }
   set xmp(raw) {
-    if (!this.data.extended) { this.#convertToExtended(); }
+    if (!this.data.extended) { this._convertToExtended(); }
     if (raw === undefined) { this.data.extended.hasXMP = false; delete this.data.xmp; }
     else { this.data.xmp = { raw }; this.data.extended.hasXMP = true; }
   }
   // Private member functions
-  #convertToExtended() {
+  _convertToExtended() {
     if (!this.loaded) { throw new Error('No image loaded'); }
     this.data.type = constants.TYPE_EXTENDED;
     this.data.extended = {
@@ -87,7 +87,7 @@ class Image {
       height: this.data.vp8 ? this.data.vp8.height : this.data.vp8l ? this.data.vp8l.height : 1
     };
   }
-  async #demuxFrame(d, frame) {
+  async _demuxFrame(d, frame) {
     let { hasICCP, hasEXIF, hasXMP } = this.data.extended ? this.data.extended : { hasICCP: false, hasEXIF: false, hasXMP: false }, hasAlpha = ((frame.vp8) && (frame.vp8.alpha)), writer = new WebPWriter();
     if (typeof d === 'string') { writer.writeFile(d); }
     else { writer.writeBuffer(); }
@@ -114,7 +114,7 @@ class Image {
     }
     return writer.commit();
   }
-  async #save(writer, { width = undefined, height = undefined, frames = undefined, bgColor = [ 255, 255, 255, 255 ], loops = 0, delay = 100, x = 0, y = 0, blend = true, dispose = false, exif = false, iccp = false, xmp = false } = {}) {
+  async _save(writer, { width = undefined, height = undefined, frames = undefined, bgColor = [ 255, 255, 255, 255 ], loops = 0, delay = 100, x = 0, y = 0, blend = true, dispose = false, exif = false, iccp = false, xmp = false } = {}) {
     let _width = width !== undefined ? width : this.width - 1, _height = height !== undefined ? height : this.height - 1, isAnim = this.hasAnim || frames !== undefined;
     if ((_width < 0) || (_width > (1 << 24))) { throw new Error('Width out of range'); }
     else if ((_height < 0) || (_height > (1 << 24))) { throw new Error('Height out of range'); }
@@ -193,7 +193,7 @@ class Image {
     this.loaded = true;
   }
   convertToAnim() {
-    if (!this.data.extended) { this.#convertToExtended(); }
+    if (!this.data.extended) { this._convertToExtended(); }
     if (this.hasAnim) { return; }
     if (this.data.vp8) { delete this.data.vp8; }
     if (this.data.vp8l) { delete this.data.vp8l; }
@@ -213,7 +213,7 @@ class Image {
     if (start > _end) { let n = start; start = _end; _end = n; }
     if (frame != -1) { start = _end = frame; }
     for (let i = start; i <= _end; i++) {
-      let t = await this.#demuxFrame(path ? (`${path}/${prefix}_${i}.webp`).replace(/#FNAME#/g, IO.basename(this.path, '.webp')) : undefined, this.anim.frames[i]);
+      let t = await this._demuxFrame(path ? (`${path}/${prefix}_${i}.webp`).replace(/#FNAME#/g, IO.basename(this.path, '.webp')) : undefined, this.anim.frames[i]);
       if (buffers) { bufs.push(t); }
     }
     if (buffers) { return bufs; }
@@ -267,7 +267,7 @@ class Image {
     let writer = new WebPWriter();
     if (path !== null) { writer.writeFile(path); }
     else { writer.writeBuffer(); }
-    return this.#save(writer, { width, height, frames, bgColor, loops, delay, x, y, blend, dispose, exif, iccp, xmp });
+    return this._save(writer, { width, height, frames, bgColor, loops, delay, x, y, blend, dispose, exif, iccp, xmp });
   }
   async getImageData() {
     if (!Image.libwebp) { throw new Error('Must call Image.initLib() before using getImageData'); }
@@ -322,7 +322,7 @@ class Image {
     if (!Image.libwebp) { throw new Error('Must call Image.initLib() before using getFrameData'); }
     if (!this.hasAnim) { throw new Error('Calling getFrameData on non-animations is not supported'); }
     if ((frame < 0) || (frame >= this.frames.length)) { throw new Error('Frame index out of range'); }
-    let fr = this.frames[frame], buf = await this.#demuxFrame(null, fr);
+    let fr = this.frames[frame], buf = await this._demuxFrame(null, fr);
     return Image.libwebp.decodeImage(buf, fr.width, fr.height);
   }
   async setFrameData(frame, buf, { width = 0, height = 0, preset = undefined, quality = undefined, exact = undefined, lossless = undefined, method = undefined, advanced = undefined } = {}) {
