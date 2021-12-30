@@ -141,6 +141,7 @@ class Image {
             width: _width,
             height: _height
           });
+          if (hasICCP) { writer.writeChunk_ICCP(iccp !== true ? iccp : this.data.iccp); }
           if (isAnim) {
             let _frames = frames || this.frames;
             writer.writeChunk_ANIM({ bgColor, loops });
@@ -174,7 +175,6 @@ class Image {
               writer.writeChunk_VP8(this.data.vp8);
             } else if (this.data.vp8l) { writer.writeChunk_VP8L(this.data.vp8l); }
           }
-          if (hasICCP) { writer.writeChunk_ICCP(iccp !== true ? iccp : this.data.iccp); }
           if (hasEXIF) { writer.writeChunk_EXIF(exif !== true ? exif : this.data.exif); }
           if (hasXMP) { writer.writeChunk_XMP(xmp !== true ? xmp : this.data.xmp); }
         }
