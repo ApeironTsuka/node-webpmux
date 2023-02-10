@@ -185,9 +185,8 @@ class Image {
   }
   // Public member functions
   async load(d) {
-    if (!IO.avail) { await IO.err(); }
     let reader = new WebPReader();
-    if (typeof d === 'string') { reader.readFile(d); this.path = d; }
+    if (typeof d === 'string') { if (!IO.avail) { await IO.err(); } reader.readFile(d); this.path = d; }
     else { reader.readBuffer(d); }
     this.data = await reader.read();
     this.loaded = true;
@@ -263,9 +262,8 @@ class Image {
     fr.height = r.height;
   }
   async save(path = this.path, { width = this.width, height = this.height, frames = this.frames, bgColor = this.hasAnim ? this.anim.bgColor : [ 255, 255, 255, 255 ], loops = this.hasAnim ? this.anim.loops : 0, delay = 100, x = 0, y = 0, blend = true, dispose = false, exif = !!this.exif, iccp = !!this.iccp, xmp = !!this.xmp } = {}) {
-    if (!IO.avail) { await IO.err(); }
     let writer = new WebPWriter();
-    if (path !== null) { writer.writeFile(path); }
+    if (path !== null) { if (!IO.avail) { await IO.err(); } writer.writeFile(path); }
     else { writer.writeBuffer(); }
     return this._save(writer, { width, height, frames, bgColor, loops, delay, x, y, blend, dispose, exif, iccp, xmp });
   }
@@ -366,7 +364,6 @@ class Image {
     }
   }
   static async save(d, opts) {
-    if (!IO.avail) { await IO.err(); }
     if ((opts.frames) && ((opts.width === undefined) || (opts.height === undefined))) { throw new Error('Must provide both width and height when passing frames'); }
     return (await Image.getEmptyImage(!!opts.frames)).save(d, opts);
   }
