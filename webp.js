@@ -217,10 +217,11 @@ class Image {
     }
     if (buffers) { return bufs; }
   }
-  async replaceFrame(frame, d) {
+  async replaceFrame(frameIndex, d) {
     if (!this.hasAnim) { throw new Error("WebP isn't animated"); }
-    if ((frame < 0) || (frame >= this.frames.length)) { throw new Error(`Frame index ${frame} out of bounds (0 <= index < ${this.frames.length})`); }
-    let r = new Image(), fr = this.frames[frame];
+    if (typeof frameIndex !== 'number') { throw new Error('Frame index expects a number'); }
+    if ((frameIndex < 0) || (frameIndex >= this.frames.length)) { throw new Error(`Frame index out of bounds (0 <= index < ${this.frames.length})`); }
+    let r = new Image(), fr = this.frames[frameIndex];
     await r.load(d);
     switch (r.type) {
       case constants.TYPE_LOSSY:
@@ -316,21 +317,23 @@ class Image {
     }
     return encodeResults.SUCCESS;
   }
-  async getFrameData(frame) {
+  async getFrameData(frameIndex) {
     if (!Image.libwebp) { throw new Error('Must call Image.initLib() before using getFrameData'); }
     if (!this.hasAnim) { throw new Error('Calling getFrameData on non-animations is not supported'); }
-    if ((frame < 0) || (frame >= this.frames.length)) { throw new Error('Frame index out of range'); }
-    let fr = this.frames[frame], buf = await this._demuxFrame(null, fr);
+    if (typeof frameIndex !== 'number') { throw new Error('Frame index expects a number'); }
+    if ((frameIndex < 0) || (frameIndex >= this.frames.length)) { throw new Error('Frame index out of range'); }
+    let fr = this.frames[frameIndex], buf = await this._demuxFrame(null, fr);
     return Image.libwebp.decodeImage(buf, fr.width, fr.height);
   }
-  async setFrameData(frame, buf, { width = 0, height = 0, preset = undefined, quality = undefined, exact = undefined, lossless = undefined, method = undefined, advanced = undefined } = {}) {
+  async setFrameData(frameIndex, buf, { width = 0, height = 0, preset = undefined, quality = undefined, exact = undefined, lossless = undefined, method = undefined, advanced = undefined } = {}) {
     if (!Image.libwebp) { throw new Error('Must call Image.initLib() before using setFrameData'); }
     if (!this.hasAnim) { throw new Error('Calling setFrameData on non-animations is not supported'); }
-    if ((frame < 0) || (frame >= this.frames.length)) { throw new Error('Frame index out of range'); }
+    if (typeof frameIndex !== 'number') { throw new Error('Frame index expects a number'); }
+    if ((frameIndex < 0) || (frameIndex >= this.frames.length)) { throw new Error('Frame index out of range'); }
     if ((quality !== undefined) && ((quality < 0) || (quality > 100))) { throw new Error('Quality out of range'); }
     if ((lossless !== undefined) && ((lossless < 0) || (lossless > 9))) { throw new Error('Lossless preset out of range'); }
     if ((method !== undefined) && ((method < 0) || (method > 6))) { throw new Error('Method out of range'); }
-    let fr = this.frames[frame], ret = Image.libwebp.encodeImage(buf, width > 0 ? width : fr.width, height > 0 ? height : fr.height, { preset, quality, exact, lossless, method, advanced }), img = new Image();
+    let fr = this.frames[frameIndex], ret = Image.libwebp.encodeImage(buf, width > 0 ? width : fr.width, height > 0 ? height : fr.height, { preset, quality, exact, lossless, method, advanced }), img = new Image();
     if (ret.res !== encodeResults.SUCCESS) { return ret.res; }
     await img.load(Buffer.from(ret.buf));
     switch (fr.type) {
