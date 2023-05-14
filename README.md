@@ -245,6 +245,11 @@ Otherwise identical to `.setImageData()`.
 Initialize the internal library used for [get/set]ImageData and [get/set]FrameData described above.<br />
 There is no need to call this unless you plan to use one of those 4 functions.
 
+##### `Image.from(webp)`
+Use the contents of `webp` and return a new Image using them.<br />
+Mainly useful for passing Image into a Web Worker or NodeJS Worker and converting the passed object back into an Image instance.<br />
+Such an approach can be used to greatly speed up saving of animations or multiple images as libwebp is *not* multi-threaded beyond saving the alpha layer of lossy images.
+
 ##### `async Image.save(path, options)`
 Save the `options` using `Image.getEmptyImage()`.<br />
 Works the same as `.save()` otherwise.<br />

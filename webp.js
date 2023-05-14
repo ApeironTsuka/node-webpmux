@@ -395,6 +395,13 @@ class Image {
       dispose
     };
   }
+  static from(webp) {
+    let img = new Image();
+    img.data = webp.data;
+    img.loaded = webp.loaded;
+    img.path = webp.path;
+    return img;
+  }
 }
 module.exports = {
   TYPE_LOSSY: constants.TYPE_LOSSY,
