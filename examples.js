@@ -30,13 +30,13 @@ img = await WebP.Image.getEmptyImage();
 await img.load('image.webp');
 
 // Or a Buffer
-await img.loadBuffer(buffer);
+await img.load(buffer);
 
 // Save to a new image on disk
 await img.save('path/to/wherever.webp');
 
 // Or a Buffer
-await img.saveBuffer();
+buffer = await img.save(null);
 
 // Or overwrite the original on disk
 await img.save();
@@ -63,7 +63,7 @@ await img.setFrameData(5, pixels, { lossless: 9, exact: true });
 await img.replaceFrame(4, 'different frame.webp');
 
 // Or from a Buffer
-await img.replaceFrameBuffer(4, buffer);
+await img.replaceFrame(4, buffer);
 
 // Or, you can generate a new frame completely from scratch
 width = 20; height = 50;
@@ -78,7 +78,7 @@ anim.frames.push(frame);
 // You can also pass `path` or `buffer` instead of `img` to generate a frame using one of those sources
 
 // Or to use it to replace an existing one while preserving the original frame's settings
-await anim.replaceFrameBuffer(4, await img.saveBuffer());
+await anim.replaceFrame(4, await img.save(null));
 
 // Or if you want to replace the whole frame, settings and all
 anim.frames.splice(4, 1, frame);
@@ -89,7 +89,7 @@ frames = [];
 await WebP.Image.save('anim.webp', { frames });
 
 // Or to a Buffer
-await WebP.Image.saveBuffer({ frames });
+buffer = await WebP.Image.save(null, { frames });
 
 // If you instead want to create an animation to do more things to
 anim = await WebP.Image.getEmptyImage();
@@ -106,9 +106,9 @@ await anim.demux('directory/to/place/them', { start: 2, end: 5 });
 await anim.demux('directory/to/place/them');
 
 // To export to a Buffer instead. Supports the three variants described for .demux() above
-await anim.demuxToBuffers({ start: 1, end: 3 });
+await anim.demux({ buffers: true, start: 1, end: 3 });
 
-// To add metadata (here EXIF is shown, but XMP and ICCP is also supported)
+// To add metadata (here EXIF is shown, but XMP and ICCP are also supported)
 // Note that *no* validation is done on metadata. Make sure your source data is valid before adding it.
 img.exif = fs.readFileSync('metadata.exif');
 
